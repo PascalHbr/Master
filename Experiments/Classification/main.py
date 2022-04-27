@@ -3,11 +3,7 @@ import torch.utils.data
 from config import *
 from dataset import *
 from model import *
-
-import torch.optim as optim
-from torch.optim import lr_scheduler
 from tqdm import tqdm
-import wandb
 
 
 def main(arg):

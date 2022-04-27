@@ -1,4 +1,3 @@
-import random
 import wandb
 from urllib import request
 

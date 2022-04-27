@@ -1,63 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="ecc0efd2-5c96-4e1b-8117-2576fc13cae9" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/Experiments/KNN/EmbeddingGeneration/config.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Experiments/KNN/EmbeddingGeneration/dataset.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Experiments/KNN/EmbeddingGeneration/generate_embeddings.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Experiments/KNN/EmbeddingGeneration/load_dalle.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Experiments/KNN/EmbeddingGeneration/model.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Experiments/KNN/EmbeddingGeneration/utils.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Experiments/KNN/EmbeddingGeneration/vimpac_utils.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Experiments/KNN/Searcher/base.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Experiments/KNN/Searcher/clip_retriever.yaml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Experiments/KNN/Searcher/nitro_dsetbuilder.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Experiments/KNN/Searcher/util.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Experiments/KNN/config.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Experiments/KNN/dataset.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Experiments/KNN/main.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Experiments/ObjectDetection/LabelGeneration/config.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Experiments/ObjectDetection/LabelGeneration/dataset.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Experiments/ObjectDetection/LabelGeneration/generate_labels.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Experiments/ObjectDetection/LabelGeneration/utils.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Experiments/ObjectDetection/config.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Experiments/ObjectDetection/dataset.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Experiments/ObjectDetection/load_dalle.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Experiments/ObjectDetection/main.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Experiments/ObjectDetection/model.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Experiments/ObjectDetection/utils.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Experiments/ObjectDetection/vimpac_utils.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Experiments/TimeUnderstanding/config.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Experiments/TimeUnderstanding/dataset.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Experiments/TimeUnderstanding/kinetics_classnames.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Experiments/TimeUnderstanding/load_dalle.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Experiments/TimeUnderstanding/main.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Experiments/TimeUnderstanding/model.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Experiments/TimeUnderstanding/utils.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Experiments/TimeUnderstanding/vimpac_utils.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/Master.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/Master.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Pretrained/.ipynb_checkpoints/3DResnet-checkpoint.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/.ipynb_checkpoints/3DResnet-checkpoint.ipynb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Pretrained/3DResnet/.ipynb_checkpoints/3DResnet-checkpoint.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/TimeUnderstanding/.ipynb_checkpoints/3DResnet-checkpoint.ipynb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Pretrained/3DResnet/3DResnet.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/TimeUnderstanding/3DResnet.ipynb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Pretrained/3DResnet/VIMPAC_small/args.pickle" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/TimeUnderstanding/VIMPAC_small/args.pickle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Pretrained/3DResnet/VIMPAC_small/args.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/TimeUnderstanding/VIMPAC_small/args.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Pretrained/3DResnet/VIMPAC_small/last/args.pickle" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/TimeUnderstanding/VIMPAC_small/last/args.pickle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Pretrained/3DResnet/VIMPAC_small/last/args.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/TimeUnderstanding/VIMPAC_small/last/args.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Pretrained/3DResnet/VIMPAC_small/last/scheduler.pt" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/TimeUnderstanding/VIMPAC_small/last/scheduler.pt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Pretrained/3DResnet/archery.mp4" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/TimeUnderstanding/archery.mp4" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Pretrained/3DResnet/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/Classification/config.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Pretrained/3DResnet/dataset.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/Classification/dataset.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Pretrained/3DResnet/kinetics_classnames.json" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/Classification/kinetics_classnames.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Pretrained/3DResnet/load_dalle.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/Classification/load_dalle.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Pretrained/3DResnet/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/Classification/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Pretrained/3DResnet/model.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/Classification/model.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Pretrained/3DResnet/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/Classification/utils.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Pretrained/3DResnet/vimpac_utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/Classification/vimpac_utils.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Pretrained/ObjectDetection/LabelGeneration/model.py" beforeDir="false" />
-    </list>
+    <list default="true" id="24e74668-4b60-45a6-b1e7-63737cbeea30" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -111,11 +55,11 @@
       <recent name="$PROJECT_DIR$/Pretrained/3DResnet" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/Archive" />
       <recent name="$PROJECT_DIR$/Pretrained/KNN/EmbeddingGeneration" />
       <recent name="$PROJECT_DIR$/Pretrained/KNN/Searcher" />
       <recent name="$PROJECT_DIR$/Pretrained/KNN" />
       <recent name="$PROJECT_DIR$/Pretrained/3DResnet/dalle_ckpts" />
-      <recent name="$PROJECT_DIR$/Pretrained/3DResnet/models" />
     </key>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
