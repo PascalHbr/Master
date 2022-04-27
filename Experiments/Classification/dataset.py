@@ -1,17 +1,13 @@
-import random
-
-import torch
+import os
+import numpy as np
 
 import wandb
 from urllib import request
-
-import numpy as np
 import cv2
 from torch.utils.data import Dataset, DataLoader
 import pandas as pd
 import glob
 import csv
-import itertools
 from utils import *
 
 from torchvision.transforms import Compose, Lambda
@@ -27,37 +23,25 @@ from pytorchvideo.transforms import (
 
 
 class UCF101(Dataset):
-    def __init__(self, mode, task, model, n_permute=4, n_blackout=4):
+    def __init__(self, mode, model):
         self.dataset_path = "/export/scratch/compvis/datasets/UCF101/videos"
         self.mode = mode
-        self.task = task
         self.model = model
 
-        # if task == 'classification':
-        #     self.kinetics_labels = self.read_kinetics_labels()
-        #     self.ucf_labels = self.read_ucf_labels('/export/home/phuber/Master/I3D_augmentations/labels.csv')
-        #     self.categories, self.label_dict = self.get_classification_categories()
-        #     self.videos = np.array([item for sublist in self.categories.values() for item in sublist])
-        # else:
-        self.videos = self.get_videos()
-        self.categories, self.label_dict = self.get_categories()
+        self.kinetics_labels = self.read_kinetics_labels()
+        self.ucf_labels = self.read_ucf_labels('/export/home/phuber/Master/I3D_augmentations/labels.csv')
+        self.all_videos = self.get_all_videos()
+        self.categories, self.label_dict = self.get_classification_categories()
+        self.videos = np.array([item for sublist in self.categories.values() for item in sublist])
+        self.idx_to_category = {i: category for i, category in enumerate(
+            list(sorted(set(os.listdir("/export/scratch/compvis/datasets/UCF101/videos/")))))}
+        self.category_to_idx = {v.lower(): k for k, v in self.idx_to_category.items()}
 
+        # Set transformation
         self.transform = self.set_transform()
 
-        # Task specific parameters
-        self.n_permute = n_permute
-        self.n_blackout = n_blackout
-        self.permutation_array = list(itertools.permutations(range(0, self.n_permute)))
-
         # Specify number of classes
-        if task == 'classification':
-            self.num_classes = 101
-        elif task == 'permutation':
-            self.num_classes = len(self.permutation_array)
-        elif task == 'blackout' or 'freeze':
-            self.num_classes = n_blackout
-        elif task == 'reverse':
-            self.num_classes = 2
+        self.num_classes = 101
 
     def read_kinetics_labels(self):
         KINETICS_URL = "https://raw.githubusercontent.com/deepmind/kinetics-i3d/master/data/label_map.txt"
@@ -67,10 +51,9 @@ class UCF101(Dataset):
 
     def read_ucf_labels(self, path_labels):
         labels = pd.read_csv(path_labels)["Corresponding Kinetics Labels"].to_list()
-        #labels = [list(map(int, label)) for label in labels]
         return labels
 
-    def get_videos(self):
+    def get_all_videos(self):
         if self.mode == 'train':
             with open('/export/home/phuber/Master/ImageClassification/splits/UCF101/trainlist.txt', 'r') as f:
                 videos = list(map(lambda x: x.split(' ')[0], f.readlines()))
@@ -78,24 +61,7 @@ class UCF101(Dataset):
             with open('/export/home/phuber/Master/ImageClassification/splits/UCF101/testlist.txt', 'r') as f:
                 videos = list(map(lambda x: x[:-1], f.readlines()))
 
-        return videos
-
-    def get_categories(self):
-        categories = {}
-        for video in self.videos:
-            category = video.split('/')[-1][2:-12]
-            if category not in categories:
-                categories[category] = []
-            categories[category].append(video)
-
-        # Make dictionary that gives kinetics label for category
-        label_dict = {}
-        for i, category in enumerate(categories):
-            label_dict[category] = i
-
-        print("Found %d videos in %d categories." % (sum(list(map(len, categories.values()))),
-                                                     len(categories)))
-        return categories, label_dict
+        return list(sorted(set(videos)))
 
     def get_classification_categories(self):
         videos = glob.glob(self.dataset_path + "/**/*.avi", recursive=True)
@@ -105,7 +71,8 @@ class UCF101(Dataset):
             category = video.split('/')[-1][2:-12]
             if category not in categories:
                 categories[category] = []
-            categories[category].append(video)
+            if video in self.all_videos:
+                categories[category].append(video)
 
         # Choose selected categories from labels.txt
         valid_categories = []
@@ -276,42 +243,9 @@ class UCF101(Dataset):
         video = video[start_frame:start_frame + n_frames]
 
         # Get label
-        if self.task == 'classification':
-            category = video_path.split('/')[-1][2:-12]
-            label = self.label_dict[category]
-        if self.task == 'reverse':
-            label = random.choice([0, 1])
-            video = np.flip(video, 0).copy() if label == 1 else video
-        elif self.task == 'permutation':
-            label = random.randint(0, len(self.permutation_array)-1)
-            permutation = np.array(self.permutation_array[label])
-            chunks = np.array(np.array_split(video, self.n_permute, axis=0), dtype=object)
-            video_permutation = chunks[permutation]
-            video = np.vstack(video_permutation).astype(np.float32)
-        elif self.task == 'blackout':
-            label = random.randint(0, self.n_blackout-1)
-            chunks = np.array(np.array_split(video, self.n_blackout, axis=0), dtype=object)
-            chunks[label] = np.zeros_like(chunks[label])
-            video = np.vstack(chunks).astype(np.float32)
-            if video.ndim != 4:
-                print("Error at item: ", item)
-        elif self.task == 'freeze':
-            label = random.randint(0, self.n_blackout-1)
-            chunks = np.array(np.array_split(video, self.n_blackout, axis=0), dtype=object)
-            frames, _, _, _ = chunks[label].shape
-            frames = 1 if frames == 0 else frames
-            try:
-                chunks[label] = np.tile(np.expand_dims(chunks[label][0], 0), (frames, 1, 1, 1))
-            except:
-                print("Item: ", item)
-                print("Video: ", video.shape)
-                print(chunks[0].shape)
-                print(chunks[1].shape)
-                print(chunks[2].shape)
-                print(chunks[3].shape)
-            video = np.vstack(chunks).astype(np.float32)
-            if video.ndim != 4:
-                print("Error at item: ", item)
+        category = video_path.split('/')[-1][2:-12]
+        label = self.label_dict[category]
+        category_idx = self.category_to_idx[category.lower()]
 
         # Make transformation
         video = torch.from_numpy(video).permute(3, 0, 1, 2)
@@ -320,34 +254,24 @@ class UCF101(Dataset):
             video = video.permute(1, 0, 2, 3)
         label = torch.tensor(label)
 
-        return video, label
+        return video, category_idx, label
 
 
 class Kinetics400(Dataset):
-    def __init__(self, mode, task, model, n_permute=4,  n_blackout=4):
+    def __init__(self, mode, model):
         self.base_path = '/export/data/compvis/kinetics/'
         self.mode = mode if mode == 'train' else 'eval'
-        self.task = task
         self.model = model
 
         self.annotations = self.get_annotations()
         self.categories, self.label_dict = self.get_categories()
+        self.idx_to_category = {i: category for i, category in enumerate(self.categories)}
+        self.category_to_idx = {v.lower(): k for k, v in self.idx_to_category.items()}
+
         self.transform = self.set_transform()
 
-        # Task specific parameters
-        self.n_permute = n_permute
-        self.n_blackout = n_blackout
-        self.permutation_array = list(itertools.permutations(range(0, self.n_permute)))
-
         # Specify number of classes
-        if task == 'classification':
-            self.num_classes = 400
-        elif task == 'permutation':
-            self.num_classes = len(self.permutation_array)
-        elif task == 'blackout' or 'freeze':
-            self.num_classes = n_blackout
-        elif task == 'reverse':
-            self.num_classes = 2
+        self.num_classes = 400
 
     def get_annotations(self):
         if self.mode == 'train':
@@ -486,6 +410,23 @@ class Kinetics400(Dataset):
                 ]
             )
 
+        elif self.model == 'vimpac':
+            side_size = 128
+            mean = [0.5, 0.5, 0.5]
+            std = [0.5, 0.5, 0.5]
+            crop_size = 128
+            num_frames = 5
+
+            transform = Compose(
+                [
+                    UniformTemporalSubsample(num_frames),
+                    Lambda(lambda x: x / 255.0),
+                    NormalizeVideo(mean, std),
+                    ShortSideScale(size=side_size),
+                    CenterCropVideo(crop_size),
+                ]
+            )
+
         return transform
 
     def __len__(self):
@@ -502,48 +443,27 @@ class Kinetics400(Dataset):
             n_frames = 64
         elif self.model == 'x3d':
             n_frames = 80
-        start_frame = max((video.shape[0] - n_frames) // 2, 0)
-        video = video[start_frame:start_frame+n_frames]
-        # start_frames = np.random.randint(0, max(video.shape[0] - n_frames, 1), size=10)
-        # videos = torch.cat([self.transform(torch.from_numpy(video[start_frame:start_frame+64]).permute(3, 0, 1, 2)).unsqueeze(0) for start_frame in start_frames], dim=0)
-        # freeze_frames = np.random.randint(0, video.shape[0], size=10)
-        # videos = torch.cat([self.transform(torch.from_numpy(np.tile(np.expand_dims(video[freeze_frame], 0), (64, 1, 1, 1))).permute(3, 0, 1, 2)).unsqueeze(0) for freeze_frame in freeze_frames], dim=0)
+        elif self.model == 'vimpac':
+            n_frames = 32
+        if self.mode == 'train':
+            start_frame = random.randint(0, max(video.shape[0] - n_frames, 0))
+        else:
+            start_frame = max((video.shape[0] - n_frames) // 2, 0)
+        video = video[start_frame:start_frame + n_frames]
 
         # Get label
-        if self.task == 'classification':
-            category = self.annotations['label'][item]
-            label = self.label_dict[category]
-        if self.task == 'reverse':
-            label = random.choice([0, 1])
-            video = np.flip(video, 0).copy() if label == 1 else video
-        elif self.task == 'permutation':
-            label = random.randint(0, len(self.permutation_array)-1)
-            permutation = np.array(self.permutation_array[label])
-            chunks = np.array(np.array_split(video, self.n_permute, axis=0), dtype=object)
-            video_permutation = chunks[permutation]
-            video = np.vstack(video_permutation).astype(np.float32)
-        elif self.task == 'blackout':
-            label = random.randint(0, self.n_blackout-1)
-            chunks = np.array(np.array_split(video, self.n_blackout, axis=0), dtype=object)
-            chunks[label] = np.zeros_like(chunks[label])
-            video = np.vstack(chunks).astype(np.float32)
-            if video.ndim != 4:
-                print("Error at item: ", item)
-        elif self.task == 'freeze':
-            label = random.randint(0, self.n_blackout-1)
-            chunks = np.array(np.array_split(video, self.n_blackout, axis=0), dtype=object)
-            frames, _, _, _ = chunks[label].shape
-            chunks[label] = np.tile(np.expand_dims(chunks[label][0], 0), (frames, 1, 1, 1))
-            video = np.vstack(chunks).astype(np.float32)
-            if video.ndim != 4:
-                print("Error at item: ", item)
+        category = self.annotations['label'][item]
+        label = self.label_dict[category]
+        category_idx = self.category_to_idx[category.lower()]
 
         # Make transformation
         video = torch.from_numpy(video).permute(3, 0, 1, 2)
         video = self.transform(video)
+        if self.model == 'vimpac':
+            video = video.permute(1, 0, 2, 3)
         label = torch.tensor(label)
 
-        return video, label
+        return video, category_idx, label
 
 
 __datasets__ = {'kinetics': Kinetics400,
@@ -555,11 +475,10 @@ def get_dataset(dataset_name):
 
 
 if __name__ == '__main__':
-    dataset = UCF101(mode='test', task='blackout', model='vimpac', n_blackout=4)
-    video, label = dataset[2013]
+    dataset = UCF101(mode='train', model='vimpac')
+    video, category_idx, label = dataset[4]
     print(video.shape)
+    print(category_idx)
     print(label)
-    for frame in video:
-        print(frame[0])
     # wandb.init(project='Sample Videos')
     # wandb.log({"video": wandb.Video(video.permute(1, 0, 2, 3).numpy(), fps=4, format="mp4")})

@@ -1,0 +1,31 @@
+builder:
+  target: nitro.data.retrieval_dataset.nitro_dsetbuilder.DatasetBuilder
+  params:
+    patch_size: 128
+    n_patches: 20
+    batch_size: 200
+    k: 20
+    max_pool_size: 2e7
+    save: True
+    num_workers: 50
+    img_size: [1200,1200]
+    chunk_size: 2e6
+    gpu: True
+    saved_embeddings: /export/compvis-nfs/group/datasets/retrieval_datasets/2022-01-18T10-45-17-FullOpenImagesTrain-ClipImageRetriever
+    searcher_savepath: /export/compvis-nfs/group/datasets/retrieval_datasets/clip_image_retriever-oi_train-alternate-128patcher
+#    visualize: True
+#    saved_embeddings: /export/compvis-nfs/user/ablattma/projects/sbgm/nitro/logs/retrieval_datasets/2022-01-16T11-47-46-FullOpenImagesTrain-ClipImageRetriever-2000000x512.npz
+#    saved_embeddings: /export/compvis-nfs/user/ablattma/projects/sbgm/nitro/logs/retrieval_datasets/2022-01-15T23-02-49-FullOpenImagesValidation-ClipImageRetriever-1000x512.npz
+
+
+    retriever_config:
+      target: nitro.modules.retrievers.ClipImageRetriever
+      params:
+        model: ViT-B/32
+
+
+    # the source for the retrieval dataset
+    data:
+      target: nitro.data.openimages.FullOpenImagesTrain
+      params: {}
+

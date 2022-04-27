@@ -10,7 +10,7 @@ def parse_args():
 
     parser.add_argument('--inference', action='store_true', default=False)
 
-    parser.add_argument('--task', default='classification', type=str)
+    parser.add_argument('--task', default='blackout', type=str)
     parser.add_argument('--n_permute', default=4, type=int)
     parser.add_argument('--n_blackout', default=4, type=int)
 
