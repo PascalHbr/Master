@@ -1,108 +1,6 @@
-import pytorchvideo.models.x3d
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from pytorchvideo.models.head import ResNetBasicHead, VisionTransformerBasicHead, SequencePool
-from pytorchvideo.models.hub import mvit_base_16x4
-from load_dalle import load_clip_model
-
-from collections import defaultdict, OrderedDict
-import os
-import warnings
 import pickle
-
-from vimpac_utils import *
-
-
-class SlowR50(nn.Module):
-    def __init__(self, num_classes, pretrained=True, freeze=False, keep_head=False, device=None):
-        super(SlowR50, self).__init__()
-        self.net = torch.hub.load('facebookresearch/pytorchvideo', 'slow_r50', pretrained=pretrained)
-        # Freeze baseline
-        if freeze:
-            for param in self.net.parameters():
-                param.requires_grad = False
-
-        # Replace classification head
-        if not keep_head:
-            cls_head = ResNetBasicHead(pool=nn.AvgPool3d(kernel_size=(8, 7, 7), stride=(1, 1, 1), padding=(0, 0, 0)),
-                                       dropout=nn.Dropout(p=0.5, inplace=False),
-                                       proj=nn.Linear(in_features=2048, out_features=num_classes, bias=True),
-                                       output_pool=nn.AdaptiveAvgPool3d(output_size=1))
-            self.net.blocks._modules['5'] = cls_head
-
-    def forward(self, video):
-        out = self.net(video)
-
-        return out
-
-
-class SlowFastR50(nn.Module):
-    def __init__(self, num_classes, pretrained=True, freeze=False, keep_head=False, device=None):
-        super(SlowFastR50, self).__init__()
-        self.net = torch.hub.load('facebookresearch/pytorchvideo', 'slowfast_r50', pretrained=pretrained)
-
-        # Freeze baseline
-        if freeze:
-            for param in self.net.parameters():
-                param.requires_grad = False
-
-        # Replace classification head
-        if not keep_head:
-            cls_head = ResNetBasicHead(dropout=nn.Dropout(p=0.5, inplace=False),
-                                       proj=nn.Linear(in_features=2304, out_features=num_classes, bias=True),
-                                       output_pool=nn.AdaptiveAvgPool3d(output_size=1))
-            self.net.blocks._modules['6'] = cls_head
-
-    def forward(self, video):
-        out = self.net(video)
-
-        return out
-
-
-class X3D(nn.Module):
-    def __init__(self, num_classes, pretrained=True, freeze=False, keep_head=False, device=None):
-        super(X3D, self).__init__()
-        self.net = torch.hub.load('facebookresearch/pytorchvideo', 'x3d_m', pretrained=pretrained)
-
-        # Freeze baseline
-        if freeze:
-            for param in self.net.parameters():
-                param.requires_grad = False
-
-        # Replace classification head
-        if not keep_head:
-            cls_head = pytorchvideo.models.x3d.create_x3d_head(dim_in=192, dim_inner=432, dim_out=2048,
-                                                               num_classes=num_classes, pool_kernel_size=(16, 7, 7))
-            self.net.blocks._modules['5'] = cls_head
-
-    def forward(self, video):
-        out = self.net(video)
-
-        return out
-
-
-class MViT(nn.Module):
-    def __init__(self, num_classes, pretrained=True, freeze=False, keep_head=False, device=None):
-        super(MViT, self).__init__()
-        self.net = mvit_base_16x4(pretrained=pretrained)
-
-        # Freeze baseline
-        if freeze:
-            for param in self.net.parameters():
-                param.requires_grad = False
-
-        # Replace classification head
-        if not keep_head:
-            cls_head = VisionTransformerBasicHead(sequence_pool=SequencePool("cls"),
-                                                  dropout=nn.Dropout(p=0.5, inplace=False),
-                                                  proj=nn.Linear(in_features=768, out_features=num_classes, bias=True))
-            self.net.head = cls_head
-
-    def forward(self, video):
-        out = self.net(video)
-
-        return out
+from .load_dalle import *
+from .vimpac_utils import *
 
 
 class VIMPAC(nn.Module):
@@ -129,7 +27,9 @@ class VIMPAC(nn.Module):
                 args=None,
             )),
             ("dropout", nn.Dropout(0.3)),
-            ("cls_fc", nn.Linear(512, num_classes)),
+            ("cls_fc1", nn.Linear(512, 128)),
+            ("relu", nn.ReLU()),
+            ("cls_fc2", nn.Linear(128, num_classes)),
         ]))
 
         # Load pretrained weights
@@ -145,7 +45,7 @@ class VIMPAC(nn.Module):
             for param in self.vimpac[0].parameters():
                 param.requires_grad = False
 
-    def load_model(self, model_path='VIMPAC_small/last/classifier.pt', strict=False):
+    def load_model(self, model_path='../../../model_checkpoints/VIMPAC_small/last/classifier.pt', strict=False):
         model_dir = os.path.dirname(model_path)
         load_args = pickle.load(open(f"{model_dir}/args.pickle", 'rb'))
         assert load_args.pre_activation == False
@@ -220,27 +120,3 @@ class VIMPAC(nn.Module):
         output = self.vimpac(token)
 
         return output
-
-
-__models__ = {'slow': SlowR50,
-              'slowfast': SlowFastR50,
-              'x3d': X3D,
-              'mvit': MViT,
-              'vimpac': VIMPAC}
-
-
-def get_model(model):
-    return __models__[model]
-
-
-if __name__ == '__main__':
-    # Set random seeds
-    torch.manual_seed(42)
-    torch.cuda.manual_seed(42)
-    torch.backends.cudnn.deterministic = True
-    torch.manual_seed(42)
-
-    frame = torch.ones(2, 5, 3, 128, 128)
-    model = VIMPAC(num_classes=4, pretrained=True, freeze=True)
-    output = model(frame)
-    print(output)

@@ -15,7 +15,7 @@ class MViT(nn.Module):
 
         # Replace classification head
         if not keep_head:
-            cls_head = VisionTransformerBasicHead(sequence_pool=SequencePool("cls"),
+            cls_head = VisionTransformerBasicHead(sequence_pool=SequencePool("mean"),
                                                   dropout=nn.Dropout(p=0.5, inplace=False),
                                                   proj=nn.Linear(in_features=768, out_features=num_classes, bias=True))
             self.net.head = cls_head

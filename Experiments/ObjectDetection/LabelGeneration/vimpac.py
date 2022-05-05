@@ -1,6 +1,6 @@
 import pickle
-from load_dalle import *
-from vimpac_utils import *
+from .load_dalle import *
+from .vimpac_utils import *
 
 
 class VIMPAC(nn.Module):
@@ -27,7 +27,9 @@ class VIMPAC(nn.Module):
                 args=None,
             )),
             ("dropout", nn.Dropout(0.3)),
-            ("cls_fc", nn.Linear(512, num_classes)),
+            ("cls_fc1", nn.Linear(512, 128)),
+            ("relu", nn.ReLU()),
+            ("cls_fc2", nn.Linear(128, num_classes)),
         ]))
 
         # Load pretrained weights
@@ -43,7 +45,7 @@ class VIMPAC(nn.Module):
             for param in self.vimpac[0].parameters():
                 param.requires_grad = False
 
-    def load_model(self, model_path='VIMPAC_small/last/classifier.pt', strict=False):
+    def load_model(self, model_path='../../../model_checkpoints/VIMPAC_small/last/classifier.pt', strict=False):
         model_dir = os.path.dirname(model_path)
         load_args = pickle.load(open(f"{model_dir}/args.pickle", 'rb'))
         assert load_args.pre_activation == False

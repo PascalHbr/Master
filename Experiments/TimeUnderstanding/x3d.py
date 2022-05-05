@@ -16,7 +16,7 @@ class X3D(nn.Module):
 
         # Replace classification head
         if not keep_head:
-            cls_head = pytorchvideo.models.x3d.create_x3d_head(dim_in=192, dim_inner=432, dim_out=2048,
+            cls_head = pytorchvideo.models.x3d.create_x3d_head(dim_in=192, dim_inner=432, dim_out=2048, activation=None,
                                                                num_classes=num_classes, pool_kernel_size=(16, 7, 7))
             self.net.blocks._modules['5'] = cls_head
 
