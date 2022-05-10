@@ -1,6 +1,95 @@
+import torch
+import torch.nn as nn
+from pytorchvideo.models.head import ResNetBasicHead
+import pytorchvideo.models.x3d
+from pytorchvideo.models.hub import mvit_base_16x4
 import pickle
-from .load_dalle import *
-from .vimpac_utils import *
+import os
+import warnings
+import torch.nn.functional as F
+from load_dalle import load_clip_model
+from collections import OrderedDict
+from vimpac_utils import TransformerLayout, OPTION2ARGS
+
+
+class SlowR50(nn.Module):
+    def __init__(self, device):
+        super(SlowR50, self).__init__()
+        self.net = torch.hub.load('facebookresearch/pytorchvideo', 'slow_r50', pretrained=True)
+
+        # Replace classification head
+        cls_head = ResNetBasicHead(pool=nn.AvgPool3d(kernel_size=(8, 7, 7), stride=(1, 1, 1), padding=(0, 0, 0)),
+                                   dropout=nn.Dropout(p=0.5, inplace=False),
+                                   proj=nn.Identity(),
+                                   output_pool=nn.AdaptiveAvgPool3d(output_size=1))
+        self.net.blocks._modules['5'] = cls_head
+
+    def forward(self, video):
+        out = self.net(video)
+
+        return out
+
+
+class SlowFastR50(nn.Module):
+    def __init__(self, device):
+        super(SlowFastR50, self).__init__()
+        self.net = torch.hub.load('facebookresearch/pytorchvideo', 'slowfast_r50', pretrained=True)
+
+        # Replace classification head
+        cls_head = ResNetBasicHead(dropout=nn.Dropout(p=0.5, inplace=False),
+                                   proj=nn.Identity(),
+                                   output_pool=nn.AdaptiveAvgPool3d(output_size=1))
+        self.net.blocks._modules['6'] = cls_head
+
+    def forward(self, video):
+        out = self.net(video)
+
+        return out
+
+
+class X3D(nn.Module):
+    def __init__(self, device):
+        super(X3D, self).__init__()
+        self.net = torch.hub.load('facebookresearch/pytorchvideo', 'x3d_m', pretrained=True)
+
+        # Replace classification head
+        pool = pytorchvideo.models.x3d.ProjectedPool(
+                    pre_conv=nn.Conv3d(
+                        in_channels=192, out_channels=432, kernel_size=(1, 1, 1), bias=False
+                    ),
+                    pre_norm=nn.BatchNorm3d(num_features=432, eps=1e-5, momentum=0.1),
+                    pre_act=nn.ReLU(),
+                    pool=nn.AvgPool3d((16, 7, 7), stride=1),
+                    post_conv=nn.Conv3d(
+                        in_channels=432, out_channels=2048, kernel_size=(1, 1, 1), bias=False
+                    ),
+                    post_norm=None,
+                    post_act=nn.ReLU(),
+                )
+        cls_head = ResNetBasicHead(
+            proj=nn.Identity(),
+            activation=None,
+            pool=pool,
+            dropout=None,
+            output_pool=nn.AdaptiveAvgPool3d(1),
+        )
+        self.net.blocks._modules['5'] = cls_head
+
+    def forward(self, video):
+        out = self.net(video)
+
+        return out
+
+
+class MViT(nn.Module):
+    def __init__(self, device):
+        super(MViT, self).__init__()
+        self.net = mvit_base_16x4(pretrained=True)
+
+    def forward(self, video):
+        out = self.net(video)
+
+        return out
 
 
 class VIMPAC(nn.Module):
@@ -35,7 +124,7 @@ class VIMPAC(nn.Module):
         for param in self.VQVAE.parameters():
             param.requires_grad = False
 
-    def load_model(self, model_path='../../../../model_checkpoints/VIMPAC_small/last/classifier.pt', strict=False):
+    def load_model(self, model_path='../../../model_checkpoints/VIMPAC_small/last/classifier.pt', strict=False):
         model_dir = os.path.dirname(model_path)
         load_args = pickle.load(open(f"{model_dir}/args.pickle", 'rb'))
         assert load_args.pre_activation == False
@@ -98,3 +187,27 @@ class VIMPAC(nn.Module):
         output = self.vimpac(token)
 
         return output
+
+
+def get_model(model_name):
+    all_models = {'slow': SlowR50,
+                  'slowfast': SlowFastR50,
+                  'x3d': X3D,
+                  'mvit': MViT,
+                  'vimpac': VIMPAC,
+                  'mae': VideoMAE}
+
+    return all_models[model_name]
+
+
+if __name__ == '__main__':
+    # Set random seeds
+    torch.manual_seed(42)
+    torch.cuda.manual_seed(42)
+    torch.backends.cudnn.deterministic = True
+    torch.manual_seed(42)
+
+    frame = torch.ones(2, 5, 3, 128, 128)
+    model = VIMPAC(num_classes=4, pretrained=True, freeze=True)
+    output = model(frame)
+    print(output)

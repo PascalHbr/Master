@@ -1,11 +1,10 @@
+import torch.nn as nn
 from functools import partial
 import numpy as np
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 from timm.models.layers import drop_path, to_2tuple, trunc_normal_
 from timm.models.registry import register_model
-from timm.models import create_model
 from collections import OrderedDict
 
 
@@ -588,7 +587,7 @@ def load_state_dict(model, state_dict, prefix='', ignore_missing="relative_posit
         print('\n'.join(error_msgs))
 
 
-def load_from_ckpt(model, path='../../../../model_checkpoints/VideoMAE/checkpoint.pth'):
+def load_from_ckpt(model, path):
     checkpoint = torch.load(path, map_location='cpu')
 
     print("Load ckpt from %s" % path)
@@ -649,35 +648,3 @@ def load_from_ckpt(model, path='../../../../model_checkpoints/VideoMAE/checkpoin
             checkpoint_model['pos_embed'] = new_pos_embed
 
     load_state_dict(model, checkpoint_model)
-
-
-class VideoMAE(nn.Module):
-    def __init__(self, device):
-        super(VideoMAE, self).__init__()
-        self.model = create_model(
-            "vit_base_patch16_224",
-            pretrained=False,
-            num_classes=400,
-            all_frames=16 * 4,
-            tubelet_size=2,
-            drop_rate=0.,
-            drop_path_rate=0.1,
-            attn_drop_rate=0.,
-            drop_block_rate=None,
-            use_mean_pooling=False,  # TODO: Try with True
-            init_scale=0.001,
-        )
-        load_from_ckpt(self.model)
-
-    def forward(self, video):
-        out = self.net(video)
-
-        return out
-
-
-if __name__ == '__main__':
-    model = VideoMAE(device='cpu')
-    # print(model.model)
-    # video = torch.randn(3, 16, 224, 224)
-    # out = model(video)
-    # print(out.shape)
