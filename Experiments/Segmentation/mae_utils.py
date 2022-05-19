@@ -539,7 +539,7 @@ def vit_base_patch16_224(pretrained=False, **kwargs):
     return model
 
 
-def load_state_dict(model, state_dict, prefix='', ignore_missing="relative_position_index"):
+def load_state_dict(model, state_dict, prefix='', ignore_missing="relative_position_index", print_keys=False):
     missing_keys = []
     unexpected_keys = []
     error_msgs = []
@@ -574,20 +574,21 @@ def load_state_dict(model, state_dict, prefix='', ignore_missing="relative_posit
 
     missing_keys = warn_missing_keys
 
-    if len(missing_keys) > 0:
-        print("Weights of {} not initialized from pretrained model: {}".format(
-            model.__class__.__name__, missing_keys))
-    if len(unexpected_keys) > 0:
-        print("Weights from pretrained model not used in {}: {}".format(
-            model.__class__.__name__, unexpected_keys))
-    if len(ignore_missing_keys) > 0:
-        print("Ignored weights of {} not initialized from pretrained model: {}".format(
-            model.__class__.__name__, ignore_missing_keys))
-    if len(error_msgs) > 0:
-        print('\n'.join(error_msgs))
+    if print_keys:
+        if len(missing_keys) > 0:
+            print("Weights of {} not initialized from pretrained model: {}".format(
+                model.__class__.__name__, missing_keys))
+        if len(unexpected_keys) > 0:
+            print("Weights from pretrained model not used in {}: {}".format(
+                model.__class__.__name__, unexpected_keys))
+        if len(ignore_missing_keys) > 0:
+            print("Ignored weights of {} not initialized from pretrained model: {}".format(
+                model.__class__.__name__, ignore_missing_keys))
+        if len(error_msgs) > 0:
+            print('\n'.join(error_msgs))
 
 
-def load_from_ckpt(model, path):
+def load_from_ckpt(model, path, print_keys):
     checkpoint = torch.load(path, map_location='cpu')
 
     print("Load ckpt from %s" % path)
@@ -647,4 +648,4 @@ def load_from_ckpt(model, path):
             new_pos_embed = torch.cat((extra_tokens, pos_tokens), dim=1)
             checkpoint_model['pos_embed'] = new_pos_embed
 
-    load_state_dict(model, checkpoint_model)
+    load_state_dict(model, checkpoint_model, print_keys=print_keys)

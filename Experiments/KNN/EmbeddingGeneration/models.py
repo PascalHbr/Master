@@ -3,6 +3,7 @@ import torch.nn as nn
 from pytorchvideo.models.head import ResNetBasicHead
 import pytorchvideo.models.x3d
 from pytorchvideo.models.hub import mvit_base_16x4
+from pytorchvideo.models.head import VisionTransformerBasicHead, SequencePool
 import pickle
 import os
 import warnings
@@ -10,6 +11,8 @@ import torch.nn.functional as F
 from load_dalle import load_clip_model
 from collections import OrderedDict
 from vimpac_utils import TransformerLayout, OPTION2ARGS
+from timm.models import create_model
+from mae_utils import vit_base_patch16_224, load_from_ckpt
 
 
 class SlowR50(nn.Module):
@@ -85,6 +88,12 @@ class MViT(nn.Module):
     def __init__(self, device):
         super(MViT, self).__init__()
         self.net = mvit_base_16x4(pretrained=True)
+
+        # Replace classification head
+        cls_head = VisionTransformerBasicHead(sequence_pool=SequencePool("mean"),
+                                              dropout=nn.Dropout(p=0.5, inplace=False),
+                                              proj=nn.Identity())
+        self.net.head = cls_head
 
     def forward(self, video):
         out = self.net(video)
@@ -189,6 +198,32 @@ class VIMPAC(nn.Module):
         return output
 
 
+class VideoMAE(nn.Module):
+    def __init__(self, device=None):
+        super(VideoMAE, self).__init__()
+        self.net = create_model(
+            "vit_base_patch16_224",
+            pretrained=False,
+            num_classes=400,
+            all_frames=16,
+            tubelet_size=2,
+            drop_rate=0.,
+            drop_path_rate=0.1,
+            attn_drop_rate=0.,
+            drop_block_rate=None,
+            use_mean_pooling=True,
+            init_scale=0.001,
+        )
+        # load_from_ckpt(self.net, path='../../model_checkpoints/VideoMAE/checkpoint.pth')
+        load_from_ckpt(self.net, path='../../../model_checkpoints/VideoMAE/checkpoint2.pth')
+        self.net.head = nn.Identity()
+
+    def forward(self, video):
+        out = self.net(video)
+
+        return out
+
+
 def get_model(model_name):
     all_models = {'slow': SlowR50,
                   'slowfast': SlowFastR50,
@@ -201,13 +236,7 @@ def get_model(model_name):
 
 
 if __name__ == '__main__':
-    # Set random seeds
-    torch.manual_seed(42)
-    torch.cuda.manual_seed(42)
-    torch.backends.cudnn.deterministic = True
-    torch.manual_seed(42)
-
-    frame = torch.ones(2, 5, 3, 128, 128)
-    model = VIMPAC(num_classes=4, pretrained=True, freeze=True)
+    frame = torch.ones(2, 3, 16, 224, 224)
+    model = VideoMAE(device="cpu")
     output = model(frame)
-    print(output)
+    print(output.shape)

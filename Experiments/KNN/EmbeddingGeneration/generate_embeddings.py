@@ -1,8 +1,6 @@
 import torch.utils.data
-
 from config import *
 from dataset import *
-from model import *
 from tqdm import tqdm
 
 

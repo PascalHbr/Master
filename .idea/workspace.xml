@@ -1,8 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="24e74668-4b60-45a6-b1e7-63737cbeea30" name="Changes" comment="">
+    <list default="true" id="6baee463-b97e-4b9c-9922-b24bf48950c5" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Experiments/Classification/dataset.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/Classification/dataset.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Experiments/Classification/mae_utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/Classification/mae_utils.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Experiments/Classification/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/Classification/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Experiments/Classification/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/Classification/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Experiments/Classification/vimpac_utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/Classification/vimpac_utils.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Experiments/KNN/EmbeddingGeneration/dataset.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/KNN/EmbeddingGeneration/dataset.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Experiments/KNN/EmbeddingGeneration/generate_embeddings.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/KNN/EmbeddingGeneration/generate_embeddings.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Experiments/KNN/EmbeddingGeneration/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/KNN/EmbeddingGeneration/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Experiments/KNN/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/KNN/config.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Experiments/KNN/dataset.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/KNN/dataset.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Experiments/KNN/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/KNN/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Experiments/ObjectDetection/LabelGeneration/dataset.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/ObjectDetection/LabelGeneration/dataset.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Experiments/ObjectDetection/LabelGeneration/generate_labels.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/ObjectDetection/LabelGeneration/generate_labels.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Experiments/ObjectDetection/dataset.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/ObjectDetection/dataset.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Experiments/ObjectDetection/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/ObjectDetection/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Experiments/ObjectDetection/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/ObjectDetection/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Experiments/Segmentation/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/Segmentation/config.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Experiments/Segmentation/mae_utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/Segmentation/mae_utils.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Experiments/Segmentation/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/Segmentation/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Experiments/Segmentation/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/Segmentation/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Experiments/TimeUnderstanding/dataset.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/TimeUnderstanding/dataset.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Experiments/TimeUnderstanding/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/TimeUnderstanding/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Experiments/TimeUnderstanding/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/TimeUnderstanding/models.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -30,7 +54,7 @@
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
   </component>
-  <component name="ProjectId" id="24xlj54oxr8v15o9M4BhikLmS9d" />
+  <component name="ProjectId" id="28e77fhrt1JO0MMMQrQJrddh8wN" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true">
     <ConfirmationsSetting value="2" id="Add" />
   </component>
@@ -39,76 +63,78 @@
     <option name="showLibraryContents" value="true" />
   </component>
   <component name="PropertiesComponent">
-    <property name="ASKED_ADD_EXTERNAL_FILES" value="true" />
+    <property name="ASKED_MARK_IGNORED_FILES_AS_EXCLUDED" value="true" />
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
-    <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="WebServerToolWindowFactoryState" value="true" />
-    <property name="credentialsType com.jetbrains.python.remote.PyCreateRemoteInterpreterDialog$PyCreateRemoteSdkForm" value="Web Deployment" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/Experiments/Classification" />
-    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/Experiments/Segmentation" />
+    <property name="settings.editor.selected.configurable" value="web.server" />
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
-      <recent name="$PROJECT_DIR$/Experiments/Classification" />
-      <recent name="$PROJECT_DIR$/Pretrained/KNN" />
-      <recent name="$PROJECT_DIR$/Pretrained/ObjectDetection" />
-      <recent name="$PROJECT_DIR$/Pretrained/ObjectDetection/LabelGeneration" />
-      <recent name="$PROJECT_DIR$/Pretrained/3DResnet" />
+      <recent name="$PROJECT_DIR$/Experiments/Segmentation" />
+      <recent name="$PROJECT_DIR$/Experiments/Segmentation/LabelGeneration" />
+      <recent name="$PROJECT_DIR$/Experiments/ObjectDetection" />
+      <recent name="$PROJECT_DIR$/Experiments/TimeUnderstanding" />
+      <recent name="$PROJECT_DIR$/Experiments/KNN/EmbeddingGeneration" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/Experiments/ObjectDetection" />
+      <recent name="$PROJECT_DIR$/Experiments/Classification" />
       <recent name="$PROJECT_DIR$/Archive" />
-      <recent name="$PROJECT_DIR$/Pretrained/KNN/EmbeddingGeneration" />
-      <recent name="$PROJECT_DIR$/Pretrained/KNN/Searcher" />
-      <recent name="$PROJECT_DIR$/Pretrained/KNN" />
-      <recent name="$PROJECT_DIR$/Pretrained/3DResnet/dalle_ckpts" />
+      <recent name="$PROJECT_DIR$/Experiments/TimeUnderstanding" />
+      <recent name="$PROJECT_DIR$/Experiments/ObjectDetection/LabelGeneration" />
     </key>
+  </component>
+  <component name="RunManager">
+    <configuration name="main" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="Master" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/Experiments/Segmentation" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Experiments/Segmentation/main.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Python.main" />
+      </list>
+    </recent_temporary>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
-      <changelist id="ecc0efd2-5c96-4e1b-8117-2576fc13cae9" name="Changes" comment="" />
-      <created>1644580250471</created>
+      <changelist id="6baee463-b97e-4b9c-9922-b24bf48950c5" name="Changes" comment="" />
+      <created>1651565031362</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
-      <updated>1644580250471</updated>
-      <workItem from="1644580251566" duration="18000" />
-      <workItem from="1644580472742" duration="617000" />
-      <workItem from="1644581122460" duration="2664000" />
-      <workItem from="1644614647721" duration="16252000" />
-      <workItem from="1644822335124" duration="359000" />
-      <workItem from="1644871581509" duration="19000" />
-      <workItem from="1644937236906" duration="1030000" />
-      <workItem from="1644938576772" duration="1996000" />
-      <workItem from="1644952980470" duration="2229000" />
-      <workItem from="1645007775361" duration="637000" />
-      <workItem from="1645037396725" duration="940000" />
-      <workItem from="1645181488367" duration="8042000" />
-      <workItem from="1645358052250" duration="56000" />
-      <workItem from="1645648661111" duration="11142000" />
-      <workItem from="1645696967099" duration="10682000" />
-      <workItem from="1645808239211" duration="2103000" />
-      <workItem from="1645820903721" duration="1713000" />
-      <workItem from="1645886946866" duration="667000" />
-      <workItem from="1645888560035" duration="14657000" />
-      <workItem from="1645904205362" duration="82000" />
-      <workItem from="1645958154570" duration="3000" />
-      <workItem from="1645962689019" duration="6781000" />
-      <workItem from="1645975375716" duration="2886000" />
-      <workItem from="1646053804180" duration="619000" />
-      <workItem from="1646151536171" duration="36608000" />
-      <workItem from="1646737955535" duration="1812000" />
-      <workItem from="1646831676297" duration="1857000" />
-      <workItem from="1647087011180" duration="1000" />
-      <workItem from="1647090720853" duration="23643000" />
-      <workItem from="1648452881845" duration="50964000" />
-      <workItem from="1649230722524" duration="47119000" />
-      <workItem from="1649849687377" duration="23080000" />
-      <workItem from="1650457552327" duration="1498000" />
-      <workItem from="1650460054955" duration="421000" />
-      <workItem from="1650462988204" duration="2118000" />
-      <workItem from="1650705596050" duration="13580000" />
-      <workItem from="1650811210055" duration="38360000" />
+      <updated>1651565031362</updated>
+      <workItem from="1651565032479" duration="9000" />
+      <workItem from="1651565043698" duration="209000" />
+      <workItem from="1651565255513" duration="406000" />
+      <workItem from="1651565663364" duration="74000" />
+      <workItem from="1651565752201" duration="698000" />
+      <workItem from="1651566455712" duration="113000" />
+      <workItem from="1651566570055" duration="64809000" />
+      <workItem from="1652085295038" duration="13399000" />
+      <workItem from="1652279985788" duration="597000" />
+      <workItem from="1652699534581" duration="2000" />
+      <workItem from="1652701785035" duration="8424000" />
+      <workItem from="1652784988952" duration="31597000" />
     </task>
     <servers />
   </component>
@@ -126,12 +152,7 @@
       </map>
     </option>
   </component>
-  <component name="VcsManagerConfiguration">
-    <ignored-roots>
-      <path value="$PROJECT_DIR$/I3D Augmentations" />
-      <path value="$PROJECT_DIR$/I3D_augmentations" />
-      <path value="$PROJECT_DIR$/Masterarbeit" />
-      <path value="$PROJECT_DIR$/Pretrained/vimpac" />
-    </ignored-roots>
+  <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/Master$main.coverage" NAME="main Coverage Results" MODIFIED="1652864768983" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Experiments/Segmentation" />
   </component>
 </project>

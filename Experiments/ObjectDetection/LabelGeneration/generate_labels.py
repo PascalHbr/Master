@@ -1,8 +1,10 @@
+import torch
 import torchvision
 from tqdm import tqdm
-from config import *
+import os
 
-from dataset import *
+from config import *
+from dataset import get_dataset, DataLoader
 from utils import *
 
 
@@ -15,9 +17,10 @@ def main(arg):
     model.eval()
 
     # Datasets
-    train_set = UCF101(mode='train', model=arg.model)
-    train_loader = DataLoader(train_set)
-    test_set = UCF101(mode='test', model=arg.model)
+    Dataset = get_dataset(arg.dataset)
+    train_set = Dataset(mode='train', model=arg.model)
+    train_loader = DataLoader(train_set, batch_size=1)
+    test_set = Dataset(mode='test', model=arg.model)
     test_loader = DataLoader(test_set, batch_size=1)
 
     # Iteration
@@ -40,7 +43,9 @@ def main(arg):
                 break
 
         if len(bboxes) == video.shape[1]:
-            with open(f'labels/{arg.model}_train.txt', 'a+') as f:
+            if not os.path.exists(f'labels/{arg.dataset}/{arg.model}'):
+                os.makedirs(f'labels/{arg.dataset}/{arg.model}')
+            with open(f'labels/{arg.dataset}/{arg.model}/train.txt', 'a+') as f:
                 for k, bbox in enumerate(bboxes):
                     f.write(f'{video_path[0]} {k} {bbox} \n')
 
@@ -63,7 +68,9 @@ def main(arg):
                 break
 
         if len(bboxes) == video.shape[1]:
-            with open(f'labels/{arg.model}_test.txt', 'a+') as f:
+            if not os.path.exists(f'labels/{arg.dataset}/{arg.model}'):
+                os.makedirs(f'labels/{arg.dataset}/{arg.model}')
+            with open(f'labels/{arg.dataset}/{arg.model}/test.txt', 'a+') as f:
                 for k, bbox in enumerate(bboxes):
                     f.write(f'{video_path[0]} {k} {bbox} \n')
 

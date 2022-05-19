@@ -1,9 +1,11 @@
-import torch.utils.data
-
-from config import *
-from dataset import *
-from model import *
+import torch
+import torch.nn as nn
+from config import parse_args
+from dataset import get_dataset
 from tqdm import tqdm
+from utils import set_random_seed
+from torch.utils.data import DataLoader
+from models import get_model
 
 
 def main(arg):
@@ -17,21 +19,22 @@ def main(arg):
     Dataset = get_dataset(arg.dataset)
     test_dataset = Dataset('test', arg.model)
     if arg.dataset == 'kinetics':
-        # test_dataset_subset = torch.utils.data.Subset(test_dataset, range(0, len(test_dataset) // 5))
-        # test_loader = DataLoader(test_dataset_subset, batch_size=1, shuffle=True, num_workers=8)
-        test_loader = DataLoader(test_dataset, batch_size=1, shuffle=True, num_workers=8)
+        test_dataset_subset = torch.utils.data.Subset(test_dataset, range(0, len(test_dataset) // 15))
+        test_loader = DataLoader(test_dataset_subset, batch_size=1, shuffle=False, num_workers=8)
+        # test_loader = DataLoader(test_dataset, batch_size=1, shuffle=True, num_workers=8)
     else:
-        test_loader = DataLoader(test_dataset, batch_size=1, shuffle=True, num_workers=8)
+        test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False, num_workers=8)
 
     # Initialize model
     Model = get_model(arg.model)
-    model = Model(num_classes=test_dataset.num_classes, pretrained=True, freeze=True,
+    model = Model(num_classes=test_dataset.num_classes, pretrained=True, freeze=False,
                   keep_head=True, device=device).to(device)
 
     # Definde loss function
     criterion = nn.CrossEntropyLoss()
 
     # Test loop
+    # model = torch.hub.load('facebookresearch/pytorchvideo', 'slow_r50', pretrained=True).to(device)
     model.eval()
     total_loss = 0.0
     stats = {}

@@ -6,7 +6,7 @@ def parse_args():
 
     parser.add_argument('--model', default='slowfast', type=str)
     parser.add_argument('--cfk', action='store_true', default=False)
-    parser.add_argument('--visualize', action='store_true', default=False)
+    parser.add_argument('--plot', action='store_true', default=False)
 
     arg = parser.parse_args()
 

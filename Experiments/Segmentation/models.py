@@ -16,98 +16,221 @@ from mae_utils import vit_base_patch16_224, load_from_ckpt
 
 
 class SlowR50(nn.Module):
-    def __init__(self, num_classes, pretrained=True, freeze=False, keep_head=False, device=None):
+    def __init__(self, device):
         super(SlowR50, self).__init__()
-        self.net = torch.hub.load('facebookresearch/pytorchvideo', 'slow_r50', pretrained=pretrained)
-        # Freeze baseline
-        if freeze:
-            for param in self.net.parameters():
-                param.requires_grad = False
+        self.net = torch.hub.load('facebookresearch/pytorchvideo', 'slow_r50', pretrained=True)
 
         # Replace classification head
-        if not keep_head:
-            cls_head = ResNetBasicHead(pool=nn.AvgPool3d(kernel_size=(8, 7, 7), stride=(1, 1, 1), padding=(0, 0, 0)),
-                                       dropout=nn.Dropout(p=0.5, inplace=False),
-                                       proj=nn.Linear(in_features=2048, out_features=num_classes, bias=True),
-                                       output_pool=nn.AdaptiveAvgPool3d(output_size=1))
-            self.net.blocks._modules['5'] = cls_head
+        cls_head = ResNetBasicHead(pool=nn.AvgPool3d(kernel_size=(8, 7, 7), stride=(1, 1, 1), padding=(0, 0, 0)),
+                                   dropout=nn.Dropout(p=0.5, inplace=False),
+                                   proj=nn.Identity(),
+                                   output_pool=nn.AdaptiveAvgPool3d(output_size=1))
+        self.net.blocks._modules['5'] = cls_head
+
+        # Freeze baseline
+        for param in self.net.parameters():
+            param.requires_grad = False
+
+        self.decoder = nn.Sequential(
+            nn.ConvTranspose2d(in_channels=2048, out_channels=512, kernel_size=3),
+            nn.BatchNorm2d(512),
+            nn.ReLU(),
+            nn.ConvTranspose2d(in_channels=512, out_channels=256, kernel_size=3),
+            nn.BatchNorm2d(256),
+            nn.ReLU(),
+            nn.Upsample(scale_factor=2, mode='nearest'),
+            nn.ConvTranspose2d(in_channels=256, out_channels=128, kernel_size=4),
+            nn.BatchNorm2d(128),
+            nn.ReLU(),
+            nn.Upsample(scale_factor=2, mode='nearest'),
+            nn.ConvTranspose2d(in_channels=128, out_channels=64, kernel_size=4),
+            nn.BatchNorm2d(64),
+            nn.ReLU(),
+            nn.Upsample(scale_factor=2, mode='nearest'),
+            nn.ConvTranspose2d(in_channels=64, out_channels=32, kernel_size=5),
+            nn.BatchNorm2d(32),
+            nn.ReLU(),
+            nn.Upsample(scale_factor=2, mode='nearest'),
+            nn.ConvTranspose2d(in_channels=32, out_channels=16, kernel_size=5),
+            nn.BatchNorm2d(16),
+            nn.ReLU(),
+            nn.Upsample(scale_factor=2, mode='nearest'),
+            nn.Conv2d(in_channels=16, out_channels=1, kernel_size=1)
+        )
 
     def forward(self, video):
-        out = self.net(video)
+        embedding = self.net(video).unsqueeze(-1).unsqueeze(-1)
+        out = self.decoder(embedding).permute(0, 2, 3, 1)
 
         return out
 
 
 class SlowFastR50(nn.Module):
-    def __init__(self, num_classes, pretrained=True, freeze=False, keep_head=False, device=None):
+    def __init__(self, device):
         super(SlowFastR50, self).__init__()
-        self.net = torch.hub.load('facebookresearch/pytorchvideo', 'slowfast_r50', pretrained=pretrained)
-
-        # Freeze baseline
-        if freeze:
-            for param in self.net.parameters():
-                param.requires_grad = False
+        self.net = torch.hub.load('facebookresearch/pytorchvideo', 'slowfast_r50', pretrained=True)
 
         # Replace classification head
-        if not keep_head:
-            cls_head = ResNetBasicHead(dropout=nn.Dropout(p=0.5, inplace=False),
-                                       proj=nn.Linear(in_features=2304, out_features=num_classes, bias=True),
-                                       output_pool=nn.AdaptiveAvgPool3d(output_size=1))
-            self.net.blocks._modules['6'] = cls_head
+        cls_head = ResNetBasicHead(dropout=nn.Dropout(p=0.5, inplace=False),
+                                   proj=nn.Identity(),
+                                   output_pool=nn.AdaptiveAvgPool3d(output_size=1))
+        self.net.blocks._modules['6'] = cls_head
+
+        # Freeze baseline
+        for param in self.net.parameters():
+            param.requires_grad = False
+
+        self.decoder = nn.Sequential(
+            nn.ConvTranspose2d(in_channels=2304, out_channels=512, kernel_size=3),
+            nn.BatchNorm2d(512),
+            nn.ReLU(),
+            nn.ConvTranspose2d(in_channels=512, out_channels=256, kernel_size=3),
+            nn.BatchNorm2d(256),
+            nn.ReLU(),
+            nn.Upsample(scale_factor=2, mode='nearest'),
+            nn.ConvTranspose2d(in_channels=256, out_channels=128, kernel_size=4),
+            nn.BatchNorm2d(128),
+            nn.ReLU(),
+            nn.Upsample(scale_factor=2, mode='nearest'),
+            nn.ConvTranspose2d(in_channels=128, out_channels=64, kernel_size=4),
+            nn.BatchNorm2d(64),
+            nn.ReLU(),
+            nn.Upsample(scale_factor=2, mode='nearest'),
+            nn.ConvTranspose2d(in_channels=64, out_channels=32, kernel_size=5),
+            nn.BatchNorm2d(32),
+            nn.ReLU(),
+            nn.Upsample(scale_factor=2, mode='nearest'),
+            nn.ConvTranspose2d(in_channels=32, out_channels=16, kernel_size=5),
+            nn.BatchNorm2d(16),
+            nn.ReLU(),
+            nn.Upsample(scale_factor=2, mode='nearest'),
+            nn.Conv2d(in_channels=16, out_channels=1, kernel_size=1)
+        )
 
     def forward(self, video):
-        out = self.net(video)
+        embedding = self.net(video).unsqueeze(-1).unsqueeze(-1)
+        out = self.decoder(embedding).permute(0, 2, 3, 1)
 
         return out
 
 
 class X3D(nn.Module):
-    def __init__(self, num_classes, pretrained=True, freeze=False, keep_head=False, device=None):
+    def __init__(self, device):
         super(X3D, self).__init__()
-        self.net = torch.hub.load('facebookresearch/pytorchvideo', 'x3d_m', pretrained=pretrained)
-
-        # Freeze baseline
-        if freeze:
-            for param in self.net.parameters():
-                param.requires_grad = False
+        self.net = torch.hub.load('facebookresearch/pytorchvideo', 'x3d_m', pretrained=True)
 
         # Replace classification head
-        if not keep_head:
-            cls_head = pytorchvideo.models.x3d.create_x3d_head(dim_in=192, dim_inner=432, dim_out=2048, activation=None,
-                                                               num_classes=num_classes, pool_kernel_size=(16, 7, 7))
-            self.net.blocks._modules['5'] = cls_head
+        pool = pytorchvideo.models.x3d.ProjectedPool(
+                    pre_conv=nn.Conv3d(
+                        in_channels=192, out_channels=432, kernel_size=(1, 1, 1), bias=False
+                    ),
+                    pre_norm=nn.BatchNorm3d(num_features=432, eps=1e-5, momentum=0.1),
+                    pre_act=nn.ReLU(),
+                    pool=nn.AvgPool3d((16, 7, 7), stride=1),
+                    post_conv=nn.Conv3d(
+                        in_channels=432, out_channels=2048, kernel_size=(1, 1, 1), bias=False
+                    ),
+                    post_norm=None,
+                    post_act=nn.ReLU(),
+                )
+        cls_head = ResNetBasicHead(
+            proj=nn.Identity(),
+            activation=None,
+            pool=pool,
+            dropout=None,
+            output_pool=nn.AdaptiveAvgPool3d(1),
+        )
+        self.net.blocks._modules['5'] = cls_head
+
+        # Freeze baseline
+        for param in self.net.parameters():
+            param.requires_grad = False
+
+        self.decoder = nn.Sequential(
+            nn.ConvTranspose2d(in_channels=2048, out_channels=512, kernel_size=3),
+            nn.BatchNorm2d(512),
+            nn.ReLU(),
+            nn.ConvTranspose2d(in_channels=512, out_channels=256, kernel_size=3),
+            nn.BatchNorm2d(256),
+            nn.ReLU(),
+            nn.Upsample(scale_factor=2, mode='nearest'),
+            nn.ConvTranspose2d(in_channels=256, out_channels=128, kernel_size=4),
+            nn.BatchNorm2d(128),
+            nn.ReLU(),
+            nn.Upsample(scale_factor=2, mode='nearest'),
+            nn.ConvTranspose2d(in_channels=128, out_channels=64, kernel_size=4),
+            nn.BatchNorm2d(64),
+            nn.ReLU(),
+            nn.Upsample(scale_factor=2, mode='nearest'),
+            nn.ConvTranspose2d(in_channels=64, out_channels=32, kernel_size=5),
+            nn.BatchNorm2d(32),
+            nn.ReLU(),
+            nn.Upsample(scale_factor=2, mode='nearest'),
+            nn.ConvTranspose2d(in_channels=32, out_channels=16, kernel_size=5),
+            nn.BatchNorm2d(16),
+            nn.ReLU(),
+            nn.Upsample(scale_factor=2, mode='nearest'),
+            nn.Conv2d(in_channels=16, out_channels=1, kernel_size=1)
+        )
 
     def forward(self, video):
-        out = self.net(video)
+        embedding = self.net(video).unsqueeze(-1).unsqueeze(-1)
+        out = self.decoder(embedding).permute(0, 2, 3, 1)
 
         return out
 
 
 class MViT(nn.Module):
-    def __init__(self, num_classes, pretrained=True, freeze=False, keep_head=False, device=None):
+    def __init__(self, device):
         super(MViT, self).__init__()
-        self.net = mvit_base_16x4(pretrained=pretrained)
-
-        # Freeze baseline
-        if freeze:
-            for param in self.net.parameters():
-                param.requires_grad = False
+        self.net = mvit_base_16x4(pretrained=True)
 
         # Replace classification head
-        if not keep_head:
-            cls_head = VisionTransformerBasicHead(sequence_pool=SequencePool("mean"),
-                                                  dropout=nn.Dropout(p=0.5, inplace=False),
-                                                  proj=nn.Linear(in_features=768, out_features=num_classes, bias=True))
-            self.net.head = cls_head
+        cls_head = VisionTransformerBasicHead(sequence_pool=SequencePool("mean"),
+                                              dropout=nn.Dropout(p=0.5, inplace=False),
+                                              proj=nn.Identity())
+        self.net.head = cls_head
+
+        # Freeze baseline
+        for param in self.net.parameters():
+            param.requires_grad = False
+
+        self.decoder = nn.Sequential(
+            nn.ConvTranspose2d(in_channels=768, out_channels=512, kernel_size=3),
+            nn.BatchNorm2d(512),
+            nn.ReLU(),
+            nn.ConvTranspose2d(in_channels=512, out_channels=256, kernel_size=3),
+            nn.BatchNorm2d(256),
+            nn.ReLU(),
+            nn.Upsample(scale_factor=2, mode='nearest'),
+            nn.ConvTranspose2d(in_channels=256, out_channels=128, kernel_size=3),
+            nn.BatchNorm2d(128),
+            nn.ReLU(),
+            nn.Upsample(scale_factor=2, mode='nearest'),
+            nn.ConvTranspose2d(in_channels=128, out_channels=64, kernel_size=3),
+            nn.BatchNorm2d(64),
+            nn.ReLU(),
+            nn.Upsample(scale_factor=2, mode='nearest'),
+            nn.ConvTranspose2d(in_channels=64, out_channels=32, kernel_size=4),
+            nn.BatchNorm2d(32),
+            nn.ReLU(),
+            nn.Upsample(scale_factor=2, mode='nearest'),
+            nn.ConvTranspose2d(in_channels=32, out_channels=16, kernel_size=3),
+            nn.BatchNorm2d(16),
+            nn.ReLU(),
+            nn.Upsample(scale_factor=2, mode='nearest'),
+            nn.Conv2d(in_channels=16, out_channels=1, kernel_size=1)
+        )
 
     def forward(self, video):
-        out = self.net(video)
+        embedding = self.net(video).unsqueeze(-1).unsqueeze(-1)
+        out = self.decoder(embedding).permute(0, 2, 3, 1)
 
         return out
 
 
 class VIMPAC(nn.Module):
-    def __init__(self, num_classes, pretrained=True, freeze=False, keep_head=False, device="cpu"):
+    def __init__(self, device="cpu"):
         super(VIMPAC, self).__init__()
         self.visible = True
         self.device = device
@@ -129,24 +252,42 @@ class VIMPAC(nn.Module):
                 layout="T,H|W",
                 args=None,
             )),
-            ("dropout", nn.Dropout(0.3)),
-            ("cls_fc1", nn.Linear(512, 128)),
-            ("relu", nn.ReLU()),
-            ("cls_fc2", nn.Linear(128, num_classes)),
         ]))
 
         # Load pretrained weights
-        if pretrained:
-            self.load_model()
+        self.load_model()
 
         # Freeze VQ-VAE
         for param in self.VQVAE.parameters():
             param.requires_grad = False
+        #
+        # # Freeze baseline
+        for param in self.vimpac.parameters():
+            param.requires_grad = False
 
-        # Freeze Vimpac backbone
-        if freeze:
-            for param in self.vimpac[0].parameters():
-                param.requires_grad = False
+        self.decoder = nn.Sequential(
+            nn.ConvTranspose2d(in_channels=512, out_channels=256, kernel_size=2),
+            nn.BatchNorm2d(256),
+            nn.ReLU(),
+            nn.Upsample(scale_factor=2, mode='nearest'),
+            nn.ConvTranspose2d(in_channels=256, out_channels=128, kernel_size=3),
+            nn.BatchNorm2d(128),
+            nn.ReLU(),
+            nn.Upsample(scale_factor=2, mode='nearest'),
+            nn.ConvTranspose2d(in_channels=128, out_channels=64, kernel_size=3),
+            nn.BatchNorm2d(64),
+            nn.ReLU(),
+            nn.Upsample(scale_factor=2, mode='nearest'),
+            nn.ConvTranspose2d(in_channels=64, out_channels=32, kernel_size=4),
+            nn.BatchNorm2d(32),
+            nn.ReLU(),
+            nn.Upsample(scale_factor=2, mode='nearest'),
+            nn.ConvTranspose2d(in_channels=32, out_channels=16, kernel_size=3),
+            nn.BatchNorm2d(16),
+            nn.ReLU(),
+            nn.Upsample(scale_factor=2, mode='nearest'),
+            nn.Conv2d(in_channels=16, out_channels=1, kernel_size=1)
+        )
 
     def load_model(self, model_path='../../model_checkpoints/VIMPAC_small/last/classifier.pt', strict=False):
         model_dir = os.path.dirname(model_path)
@@ -195,18 +336,6 @@ class VIMPAC(nn.Module):
 
                     state_dict[key] = load_value
 
-        # if self.visible:
-        #     load_keys = set(state_dict.keys())
-        #     model_keys = set(self.vimpac.state_dict().keys())
-            # if load_keys != model_keys:
-            #     # print("Weights in load but not in model")
-            #     # for key in sorted(load_keys - model_keys):
-            #     #     print(f"\t{key}")
-            #
-            #     print("Weights in model but not in load")
-            #     for key in sorted(model_keys - load_keys):
-            #         print(f"\t{key}")
-
         self.vimpac.load_state_dict(state_dict, strict=strict)
 
     @torch.no_grad()
@@ -220,13 +349,14 @@ class VIMPAC(nn.Module):
 
     def forward(self, video):
         token = self.tokenize(video)
-        output = self.vimpac(token)
+        embedding = self.vimpac(token).unsqueeze(-1).unsqueeze(-1)
+        output = self.decoder(embedding).permute(0, 2, 3, 1)
 
         return output
 
 
 class VideoMAE(nn.Module):
-    def __init__(self, num_classes, pretrained=True, freeze=False, keep_head=False, device="cpu"):
+    def __init__(self, device=None):
         super(VideoMAE, self).__init__()
         self.net = create_model(
             "vit_base_patch16_224",
@@ -241,21 +371,45 @@ class VideoMAE(nn.Module):
             use_mean_pooling=True,
             init_scale=0.001,
         )
-
-        # Load pretrained weights
-        if pretrained:
-            load_from_ckpt(self.net, path='../../model_checkpoints/VideoMAE/checkpoint2.pth')
+        # load_from_ckpt(self.net, path='../../model_checkpoints/VideoMAE/checkpoint.pth')
+        load_from_ckpt(self.net, path='../../model_checkpoints/VideoMAE/checkpoint2.pth', print_keys=False)
+        self.net.head = nn.Identity()
 
         # Freeze baseline
-        if freeze:
-            for param in self.net.parameters():
-                param.requires_grad = False
+        for param in self.net.parameters():
+            param.requires_grad = False
 
-        if not keep_head:
-            self.net.head = nn.Linear(768, num_classes)
+        # Build Decoder
+        self.decoder = nn.Sequential(
+            nn.ConvTranspose2d(in_channels=768, out_channels=512, kernel_size=3),
+            nn.BatchNorm2d(512),
+            nn.ReLU(),
+            nn.ConvTranspose2d(in_channels=512, out_channels=256, kernel_size=3),
+            nn.BatchNorm2d(256),
+            nn.ReLU(),
+            nn.Upsample(scale_factor=2, mode='nearest'),
+            nn.ConvTranspose2d(in_channels=256, out_channels=128, kernel_size=3),
+            nn.BatchNorm2d(128),
+            nn.ReLU(),
+            nn.Upsample(scale_factor=2, mode='nearest'),
+            nn.ConvTranspose2d(in_channels=128, out_channels=64, kernel_size=3),
+            nn.BatchNorm2d(64),
+            nn.ReLU(),
+            nn.Upsample(scale_factor=2, mode='nearest'),
+            nn.ConvTranspose2d(in_channels=64, out_channels=32, kernel_size=4),
+            nn.BatchNorm2d(32),
+            nn.ReLU(),
+            nn.Upsample(scale_factor=2, mode='nearest'),
+            nn.ConvTranspose2d(in_channels=32, out_channels=16, kernel_size=3),
+            nn.BatchNorm2d(16),
+            nn.ReLU(),
+            nn.Upsample(scale_factor=2, mode='nearest'),
+            nn.Conv2d(in_channels=16, out_channels=1, kernel_size=1)
+        )
 
     def forward(self, video):
-        out = self.net(video)
+        embedding = self.net(video).unsqueeze(-1).unsqueeze(-1)
+        out = self.decoder(embedding).permute(0, 2, 3, 1)
 
         return out
 
@@ -270,3 +424,10 @@ __models__ = {'slow': SlowR50,
 
 def get_model(model):
     return __models__[model]
+
+
+if __name__ == '__main__':
+    frame = torch.ones(2, 3, 8, 256, 256)
+    model = SlowR50(device="cpu")
+    output = model(frame)
+    print(output.shape)

@@ -2,7 +2,7 @@ import torch.utils.data
 
 from config import *
 from dataset import *
-from model import *
+from models import *
 
 import torch.optim as optim
 from torch.optim import lr_scheduler
@@ -182,7 +182,7 @@ def main(arg):
             for key in stats.keys():
                 print("{:<20s} {:<10d} {:<10.2f} {:<10.2f}".format(key, stats[key]["counts"], stats[key]["loss"]/stats[key]["counts"], stats[key]["corrects"]/stats[key]["counts"] * 100))
             print("-" * 50)
-            print("{:<20s} {:<10d} {:<10.2f} {:<10.2f}".format("Total", len(test_dataset), epoch_loss, epoch_acc * 100))
+            print("{:<20s} {:<10d} {:<10.2f} {:<10.2f}".format(f"Total ({arg.model})", len(test_dataset), epoch_loss, epoch_acc * 100))
         else:
             model.eval()
             running_loss = 0.0
@@ -231,7 +231,7 @@ def main(arg):
             for key in stats.keys():
                 print("{:<20s} {:<10d} {:<10.5f}".format(key, stats[key]["counts"], stats[key]["loss"] / stats[key]["counts"]))
             print("-" * 40)
-            print("{:<20s} {:<10d} {:<10.5f}".format("Total", len(test_dataset), epoch_loss))
+            print("{:<20s} {:<10d} {:<10.5f}".format(f"Total ({arg.model})", len(test_dataset), epoch_loss))
 
 
 if __name__ == '__main__':

@@ -4,7 +4,6 @@ from torch.utils.data import Dataset, DataLoader
 from utils import *
 import pandas as pd
 from urllib import request
-from model import *
 
 from torchvision.transforms import Compose, Lambda
 from torchvision.transforms.transforms import Resize
@@ -61,26 +60,15 @@ class UCF101(Dataset):
         labels = pd.read_csv("/export/home/phuber/Master/I3D_augmentations/labels.csv")["Corresponding Kinetics Labels"].to_list()
         return labels
 
-    def get_all_videos(self):
-        with open(f'/export/home/phuber/Master/ImageClassification/splits/UCF101/{self.mode}list.txt', 'r') as f:
-            if self.mode == 'train':
-                videos = list(map(lambda x: x.split(' ')[0], f.readlines()))
-            else:
-                videos = list(map(lambda x: x.split(' ')[0][:-1], f.readlines()))
-
-        videos = list(sorted(set(videos)))
-
-        return videos
-
     def get_bbox_videos_and_labels(self):
         if self.mode == 'train':
-            with open(f'/export/home/phuber/Master/Pretrained/ObjectDetection/LabelGeneration/labels/{self.model}_train.txt', 'r') as f:
+            with open(f'/export/home/phuber/archive/PersonDetection/ucf/{self.model}_train.txt', 'r') as f:
                 lines = f.readlines()
                 videos = list(map(lambda x: x.split(' ')[0], lines))
                 bboxes = list(map(lambda x: list(eval(x.split('[')[1][:-3])), lines))
 
         else:
-            with open(f'/export/home/phuber/Master/Pretrained/ObjectDetection/LabelGeneration/labels/{self.model}_test.txt', 'r') as f:
+            with open(f'/export/home/phuber/archive/PersonDetection/ucf/{self.model}_test.txt', 'r') as f:
                 lines = f.readlines()
                 videos = list(map(lambda x: x.split(' ')[0], lines))
                 bboxes = list(map(lambda x: list(eval(x.split('[')[1][:-3])), lines))
@@ -240,7 +228,7 @@ class UCF101(Dataset):
             )
 
         elif self.model == 'mvit':
-            self.side_size = 256  # TODO: See if it should be 224
+            self.side_size = 256
             mean = [0.45, 0.45, 0.45]
             std = [0.225, 0.225, 0.225]
             self.crop_size = 224
@@ -271,6 +259,23 @@ class UCF101(Dataset):
                     NormalizeVideo(mean, std),
                     ShortSideScale(size=self.side_size),
                     Resize(size=self.resize),
+                    CenterCropVideo(self.crop_size),
+                ]
+            )
+
+        elif self.model == 'mae':
+            self.side_size = 256
+            mean = [0.5, 0.5, 0.5]
+            std = [0.5, 0.5, 0.5]
+            self.crop_size = 224
+            self.num_frames = 16
+
+            transform = Compose(
+                [
+                    UniformTemporalSubsample(self.num_frames),
+                    Lambda(lambda x: x / 255.0),
+                    NormalizeVideo(mean, std),
+                    ShortSideScale(size=self.side_size),
                     CenterCropVideo(self.crop_size),
                 ]
             )
@@ -331,7 +336,7 @@ class UCF101(Dataset):
             category_label = -1
 
         # Take model-specific number of frames
-        if self.model in ['slow', 'slowfast', 'mvit']:
+        if self.model in ['slow', 'slowfast', 'mvit', 'mae']:
             n_frames = 64
         elif self.model == 'x3d':
             n_frames = 80

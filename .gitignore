@@ -1,2 +1,4 @@
-Experiments/TimeUnderstanding/dalle_ckpts/decoder.pkl
-Experiments/TimeUnderstanding/VIMPAC_small/last/classifier.pt
+model_checkpoints/dalle_ckpts/decoder.pkl
+model_checkpoints/VIMPAC_small/last/classifier.pt
+model_checkpoints/VideoMAE/checkpoint2.pth
+model_checkpoints/VideoMAE/checkpoint.pth

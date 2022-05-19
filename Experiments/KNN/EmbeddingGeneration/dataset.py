@@ -1,6 +1,6 @@
 from torch.utils.data import Dataset, DataLoader
 from utils import *
-from model import *
+from models import *
 
 from torchvision.transforms import Compose, Lambda
 from torchvision.transforms.transforms import Resize
@@ -190,6 +190,23 @@ class UCF101(Dataset):
                 ]
             )
 
+        elif self.model == 'mae':
+            side_size = 256
+            mean = [0.5, 0.5, 0.5]
+            std = [0.5, 0.5, 0.5]
+            crop_size = 224
+            num_frames = 16
+
+            transform = Compose(
+                [
+                    UniformTemporalSubsample(num_frames),
+                    Lambda(lambda x: x / 255.0),
+                    NormalizeVideo(mean, std),
+                    ShortSideScale(size=side_size),
+                    CenterCropVideo(crop_size),
+                ]
+            )
+
         return transform
 
     def __len__(self):
@@ -202,7 +219,7 @@ class UCF101(Dataset):
         label = self.label_dict[video_path.split('/')[-1][2:-12]]
 
         # Take model-specific number of frames
-        if self.model in ['slow', 'slowfast', 'mvit']:
+        if self.model in ['slow', 'slowfast', 'mvit', 'mae']:
             n_frames = 64
         elif self.model == 'x3d':
             n_frames = 80

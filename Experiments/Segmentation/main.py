@@ -30,8 +30,7 @@ def main(arg):
 
     # Initialize model
     Model = get_model(arg.model)
-    model = Model(num_classes=test_dataset.num_classes, pretrained=arg.pretrained, freeze=arg.freeze,
-                  keep_head=arg.keep_head, device=device).to(device)
+    model = Model(device=device).to(device)
 
     # Make directory
     model_save_dir = 'saved_models/' + arg.name
@@ -41,8 +40,8 @@ def main(arg):
         write_hyperparameters(vars(arg), model_save_dir)
 
     # Load model for inference
-    # if arg.inference and not arg.classification:
-    #     model = load_model(model, model_save_dir, device).to(device)
+    if arg.inference and not arg.classification:
+        model = load_model(model, model_save_dir, device).to(device)
 
     # Set random seeds
     set_random_seed()
@@ -57,7 +56,7 @@ def main(arg):
     optimizer = optim.SGD(model.parameters(), lr=arg.lr, momentum=0.9)
 
     # Decay LR by a factor of 0.1 every 7 epochs
-    scheduler = lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
+    scheduler = lr_scheduler.StepLR(optimizer, step_size=25, gamma=0.5)
     epochs = arg.epochs
     best_loss = 1e12
 
@@ -91,7 +90,7 @@ def main(arg):
                 # statistics
                 running_loss += loss.item() * segmentation_masks.size(0)
 
-            scheduler.step()
+            # scheduler.step()
             epoch_loss = running_loss / len(train_dataset)
             wandb.log({"Train Loss": epoch_loss})
             print('Train Loss: {:.4f}'.format(epoch_loss))
@@ -129,7 +128,7 @@ def main(arg):
                             outputs = torch.cat(outputs_to_plot, dim=0)
                             labels = torch.cat(labels_to_plot, dim=0)
                             results = make_visualizations(frames, outputs, labels, model_save_dir, 0, False)
-                            wandb.log({f"Summary_{step}": [wandb.Image(results)]})
+                            wandb.log({f"Summary_{epoch}": [wandb.Image(results)]})
 
             epoch_loss = running_loss / len(test_dataset)
             wandb.log({"Test Loss": epoch_loss})
@@ -221,7 +220,7 @@ def main(arg):
                         outputs = torch.cat(outputs_to_plot, dim=0)
                         labels = torch.cat(labels_to_plot, dim=0)
                         results = make_visualizations(frames, outputs, labels, model_save_dir, 0, True)
-                        wandb.log({f"Summary_{step}": [wandb.Image(results)]})
+                        wandb.log({f"Summary": [wandb.Image(results)]})
 
             # epoch_loss = running_loss / len(test_dataset)
             # stats = dict(sorted(stats.items(), key=lambda item: item[1]["counts"], reverse=True))

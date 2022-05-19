@@ -1,14 +1,15 @@
 import os
 import numpy as np
-
+import torch
 import wandb
 from urllib import request
 import cv2
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset
 import pandas as pd
 import glob
 import csv
-from utils import *
+from utils import PackPathway
+import random
 
 from torchvision.transforms import Compose, Lambda
 from torchvision.transforms._transforms_video import (
@@ -186,7 +187,7 @@ class UCF101(Dataset):
             )
 
         elif self.model == 'mvit':
-            side_size = 256  # TODO: See if it should be 224
+            side_size = 256
             mean = [0.45, 0.45, 0.45]
             std = [0.225, 0.225, 0.225]
             crop_size = 224
@@ -219,6 +220,23 @@ class UCF101(Dataset):
                 ]
             )
 
+        elif self.model == 'mae':
+            side_size = 256
+            mean = [0.5, 0.5, 0.5]
+            std = [0.5, 0.5, 0.5]
+            crop_size = 224
+            num_frames = 16
+
+            transform = Compose(
+                [
+                    UniformTemporalSubsample(num_frames),
+                    Lambda(lambda x: x / 255.0),
+                    NormalizeVideo(mean, std),
+                    ShortSideScale(size=side_size),
+                    CenterCropVideo(crop_size),
+                ]
+            )
+
         return transform
 
     def __len__(self):
@@ -230,7 +248,7 @@ class UCF101(Dataset):
         video = self.load_video(video_path)
 
         # Take model-specific number of frames
-        if self.model in ['slow', 'slowfast', 'mvit']:
+        if self.model in ['slow', 'slowfast', 'mvit', 'mae']:
             n_frames = 64
         elif self.model == 'x3d':
             n_frames = 80
@@ -427,6 +445,23 @@ class Kinetics400(Dataset):
                 ]
             )
 
+        elif self.model == 'mae':
+            side_size = 256
+            mean = [0.5, 0.5, 0.5]
+            std = [0.5, 0.5, 0.5]
+            crop_size = 224
+            num_frames = 16
+
+            transform = Compose(
+                [
+                    UniformTemporalSubsample(num_frames),
+                    Lambda(lambda x: x / 255.0),
+                    NormalizeVideo(mean, std),
+                    ShortSideScale(size=side_size),
+                    CenterCropVideo(crop_size),
+                ]
+            )
+
         return transform
 
     def __len__(self):
@@ -439,7 +474,7 @@ class Kinetics400(Dataset):
         video = self.load_video(video_path)
 
         # Take model-specific number of frames
-        if self.model in ['slow', 'slowfast', 'mvit']:
+        if self.model in ['slow', 'slowfast', 'mvit', 'mae']:
             n_frames = 64
         elif self.model == 'x3d':
             n_frames = 80
@@ -475,10 +510,12 @@ def get_dataset(dataset_name):
 
 
 if __name__ == '__main__':
-    dataset = UCF101(mode='train', model='vimpac')
-    video, category_idx, label = dataset[4]
-    print(video.shape)
+    dataset = UCF101(mode='test', model='slowfast')
+    video, category_idx, label = dataset[-1]
+    print(video[0].shape)
+    print(video[1].shape)
     print(category_idx)
     print(label)
+    print(dataset.idx_to_category[category_idx])
     # wandb.init(project='Sample Videos')
     # wandb.log({"video": wandb.Video(video.permute(1, 0, 2, 3).numpy(), fps=4, format="mp4")})

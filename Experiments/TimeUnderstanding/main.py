@@ -2,7 +2,7 @@ import torch.utils.data
 
 from config import *
 from dataset import *
-from model import *
+from models import *
 
 import torch.optim as optim
 from torch.optim import lr_scheduler

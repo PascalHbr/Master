@@ -31,10 +31,11 @@ def main(arg):
         for key in stats.keys():
             print("{:<20s} {:<10d} {:<10.2f}".format(key, stats[key]["counts"], stats[key]["accuracy"]))
         print("-" * 40)
-        print("{:<20s} {:<10d} {:<10.2f}".format("Total", len(queries), total_accuracy))
+        print("{:<20s} {:<10d} {:<10.2f}".format(f"Total ({arg.model})", len(queries), total_accuracy))
 
-    if arg.visualize:
-        embeddings = Embeddings(model=arg.model, data='train')
+    if arg.plot:
+        embeddings = Embeddings(model=arg.model, data='train', subset=True)
+        embeddings.plot_embeddings()
 
 
 if __name__ == '__main__':

@@ -1,5 +1,12 @@
 import numpy as np
 import scann
+from sklearn.manifold import TSNE
+import time
+import wandb
+import seaborn as sns
+import matplotlib.pyplot as plt
+import pandas as pd
+from urllib import request
 
 
 class KNN:
@@ -8,24 +15,75 @@ class KNN:
         self.data = data
 
         self.dataset_path = "/export/scratch/compvis/datasets/UCF101/videos"
-        self.videos = self.get_videos()
+        self.kinetics_labels = self.read_kinetics_labels()
+        self.ucf_labels = self.read_ucf_labels('/export/home/phuber/Master/I3D_augmentations/labels.csv')
+
+        self.all_videos, self.all_embeddings = self.get_all_videos()
+        print(len(self.all_videos))
+        print(len(self.all_embeddings))
+        self.categories, self.label_dict = self.get_classification_categories()
+        self.videos = np.array([item for sublist in self.categories.values() for item in sublist])
         self.embedding_dim = self.get_embedding_dim()
         self.data_dict, self.category_to_label = self.get_data()
         self.embeddings, self.labels, self.idx_to_category = self.load_embeddings()
 
         self.searcher = self.create_searcher()
 
-    def get_videos(self):
+    def read_kinetics_labels(self):
+        KINETICS_URL = "https://raw.githubusercontent.com/deepmind/kinetics-i3d/master/data/label_map.txt"
+        with request.urlopen(KINETICS_URL) as obj:
+            labels = [line.decode("utf-8").strip() for line in obj.readlines()]
+        return labels
+
+    def read_ucf_labels(self, path_labels):
+        labels = pd.read_csv(path_labels)["Corresponding Kinetics Labels"].to_list()
+        return labels
+
+    def get_all_videos(self):
         if self.data == 'train':
             with open(f'/export/home/phuber/Master/ImageClassification/splits/UCF101/trainlist.txt', 'r') as f:
-                videos = list(map(lambda x: f'embeddings/{self.model}/' + x.split(' ')[0][47:-4] + '.npy', f.readlines()))
+                videos = list(map(lambda x: x.split(' ')[0], f.readlines()))
+            with open(f'/export/home/phuber/Master/ImageClassification/splits/UCF101/trainlist.txt', 'r') as f:
+                embeddings = list(map(lambda x: f'/export/home/phuber/archive/embeddings/{self.model}/' + x.split(' ')[0][47:-4] + '.npy', f.readlines()))
         elif self.data == 'test':
             with open(f'/export/home/phuber/Master/ImageClassification/splits/UCF101/testlist.txt', 'r') as f:
-                videos = list(map(lambda x: f'embeddings/{self.model}/' + x.split(' ')[0][:-1][47:-4] + '.npy', f.readlines()))
-            videos = list(sorted(set(videos)))
+                videos = list(map(lambda x: x.split(' ')[0][:-1], f.readlines()))
+            with open(f'/export/home/phuber/Master/ImageClassification/splits/UCF101/testlist.txt', 'r') as f:
+                embeddings = list(map(lambda x: f'/export/home/phuber/archive/embeddings/{self.model}/' + x.split(' ')[0][:-1][47:-4] + '.npy', f.readlines()))
         videos = list(sorted(set(videos)))
+        embeddings = list(sorted(set(embeddings)))
 
-        return videos
+        return videos, embeddings
+
+    def get_classification_categories(self):
+        categories = {}
+        for video, embedding in zip(self.all_videos, self.all_embeddings):
+            category = video.split('/')[-1][2:-12]
+            if category not in categories:
+                categories[category] = []
+            if video in self.all_videos:
+                categories[category].append(embedding)
+
+        # Choose selected categories from labels.txt
+        valid_categories = []
+        if self.model in ["vimpac", "mae"]:
+            selected_categories = categories
+        else:
+            for i, (category, sequences) in enumerate(categories.items()):
+                kinetics_id = self.ucf_labels[i]
+                if kinetics_id >= 0:
+                    valid_categories.append(category)
+            selected_categories = {valid_category: categories[valid_category] for valid_category in valid_categories}
+
+        # Make dictionary that gives kinetics label for category
+        label_dict = {}
+        for i, category in enumerate(categories):
+            if category in selected_categories:
+                label_dict[category] = self.ucf_labels[i]
+
+        print("Found %d videos in %d categories." % (sum(list(map(len, selected_categories.values()))),
+                                                     len(selected_categories)))
+        return selected_categories, label_dict
 
     def get_embedding_dim(self):
         if self.model == 'slow':
@@ -38,6 +96,8 @@ class KNN:
             return 768
         elif self.model == 'vimpac':
             return 512
+        elif self.model == 'mae':
+            return 768
 
     def load_embeddings(self):
         embeddings = np.zeros((len(self.videos), self.embedding_dim), dtype=np.float32)
@@ -62,8 +122,6 @@ class KNN:
         for i, category in enumerate(data_dict):
             label_dict[category] = i
 
-        print("Found %d videos in %d categories." % (sum(list(map(len, data_dict.values()))),
-                                                     len(data_dict)))
         return data_dict, label_dict
 
     def print_summary(self):
@@ -99,27 +157,79 @@ class KNN:
 
 
 class Embeddings:
-    def __init__(self, model, data):
+    def __init__(self, model, data, subset=False):
         self.model = model
         self.data = data
 
         self.dataset_path = "/export/scratch/compvis/datasets/UCF101/videos"
-        self.videos = self.get_videos()
+        self.kinetics_labels = self.read_kinetics_labels()
+        self.ucf_labels = self.read_ucf_labels('/export/home/phuber/Master/I3D_augmentations/labels.csv')
+
+        self.all_videos, self.all_embeddings = self.get_all_videos()
+        self.categories, self.label_dict = self.get_classification_categories()
+        self.videos = np.array([item for sublist in self.categories.values() for item in sublist])
         self.embedding_dim = self.get_embedding_dim()
         self.data_dict, self.category_to_label = self.get_data()
         self.embeddings, self.labels, self.idx_to_category = self.load_embeddings()
+        if subset:
+            subset_length = self.embeddings.shape[0] // 10
+            self.embeddings, self.labels = self.embeddings[:subset_length], self.labels[:subset_length]
 
-    def get_videos(self):
+    def read_kinetics_labels(self):
+        KINETICS_URL = "https://raw.githubusercontent.com/deepmind/kinetics-i3d/master/data/label_map.txt"
+        with request.urlopen(KINETICS_URL) as obj:
+            labels = [line.decode("utf-8").strip() for line in obj.readlines()]
+        return labels
+
+    def read_ucf_labels(self, path_labels):
+        labels = pd.read_csv(path_labels)["Corresponding Kinetics Labels"].to_list()
+        return labels
+
+    def get_all_videos(self):
         if self.data == 'train':
             with open(f'/export/home/phuber/Master/ImageClassification/splits/UCF101/trainlist.txt', 'r') as f:
-                videos = list(
-                    map(lambda x: f'embeddings/{self.model}/' + x.split(' ')[0][47:-4] + '.npy', f.readlines()))
+                videos = list(map(lambda x: x.split(' ')[0], f.readlines()))
+            with open(f'/export/home/phuber/Master/ImageClassification/splits/UCF101/trainlist.txt', 'r') as f:
+                embeddings = list(map(lambda x: f'/export/home/phuber/archive/embeddings/{self.model}/' + x.split(' ')[0][47:-4] + '.npy', f.readlines()))
         elif self.data == 'test':
             with open(f'/export/home/phuber/Master/ImageClassification/splits/UCF101/testlist.txt', 'r') as f:
-                videos = list(map(lambda x: f'embeddings/{self.model}/' + x.split(' ')[0][:-1][47:-4] + '.npy', f.readlines()))
+                videos = list(map(lambda x: x.split(' ')[0][:-1], f.readlines()))
+            with open(f'/export/home/phuber/Master/ImageClassification/splits/UCF101/testlist.txt', 'r') as f:
+                embeddings = list(map(lambda x: f'/export/home/phuber/archive/embeddings/{self.model}/' + x.split(' ')[0][:-1][47:-4] + '.npy', f.readlines()))
         videos = list(sorted(set(videos)))
+        embeddings = list(sorted(set(embeddings)))
 
-        return videos
+        return videos, embeddings
+
+    def get_classification_categories(self):
+        categories = {}
+        for video, embedding in zip(self.all_videos, self.all_embeddings):
+            category = video.split('/')[-1][2:-12]
+            if category not in categories:
+                categories[category] = []
+            if video in self.all_videos:
+                categories[category].append(embedding)
+
+        # Choose selected categories from labels.txt
+        valid_categories = []
+        if self.model in ["vimpac", "mae"]:
+            selected_categories = categories
+        else:
+            for i, (category, sequences) in enumerate(categories.items()):
+                kinetics_id = self.ucf_labels[i]
+                if kinetics_id >= 0:
+                    valid_categories.append(category)
+            selected_categories = {valid_category: categories[valid_category] for valid_category in valid_categories}
+
+        # Make dictionary that gives kinetics label for category
+        label_dict = {}
+        for i, category in enumerate(categories):
+            if category in selected_categories:
+                label_dict[category] = self.ucf_labels[i]
+
+        print("Found %d videos in %d categories." % (sum(list(map(len, selected_categories.values()))),
+                                                     len(selected_categories)))
+        return selected_categories, label_dict
 
     def get_embedding_dim(self):
         if self.model == 'slow':
@@ -132,6 +242,8 @@ class Embeddings:
             return 768
         elif self.model == 'vimpac':
             return 512
+        elif self.model == 'mae':
+            return 768
 
     def load_embeddings(self):
         embeddings = np.zeros((len(self.videos), self.embedding_dim), dtype=np.float32)
@@ -156,9 +268,23 @@ class Embeddings:
         for i, category in enumerate(data_dict):
             label_dict[category] = i
 
-        print("Found %d videos in %d categories." % (sum(list(map(len, data_dict.values()))),
-                                                     len(data_dict)))
         return data_dict, label_dict
+
+    def plot_embeddings(self):
+        time_start = time.time()
+        tsne = TSNE(n_components=2, verbose=1, perplexity=40, n_iter=300)
+        tsne_results = tsne.fit_transform(self.embeddings)
+        print('t-SNE done! Time elapsed: {} seconds'.format(time.time() - time_start))
+
+        # log scatterplot on wandb
+        wandb.init(project='t-sne', name=self.model)
+        fig, ax = plt.subplots(figsize=(11.7, 8.27))
+        categories = [self.idx_to_category[i] for i in range(self.labels.shape[0])]
+        df = pd.DataFrame(tsne_results, categories, columns=["x", "y"])
+        df["Category"] = categories
+        sns.scatterplot(data=df, x="x", y="y", hue="Category")
+        # plt.legend(loc='center right', bbox_to_anchor=(1.25, 0.5), ncol=1)
+        wandb.log({f"t-sne of {self.model}": wandb.Image(fig)})
 
     def __len__(self):
         return len(self.videos)
@@ -173,13 +299,6 @@ class Embeddings:
 
 
 if __name__ == '__main__':
-    knn_classifier = KNN(model="slowfast", data='train')
-    queries = Embeddings(model="slowfast", data='test')
-    embedding, category, label = queries[2]
-    # 3242, 3245, 5912
-    neighbors, neighbor_categories = knn_classifier.find_nearest_neighbors(embedding)
-    print(category)
-    print(neighbor_categories)
-    print(neighbors)
-    # wandb.init(project='Sample Image')
-    # wandb.log({"video": wandb.Video(video[1].permute(1, 0, 2, 3).numpy(), fps=4, format="mp4")})
+    knn_classifier = KNN(model="slowfast", data='test')
+    # embeddings = Embeddings(model="mvit", data='test', subset=True)
+    # embeddings.plot_embeddings()
