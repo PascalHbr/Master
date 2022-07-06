@@ -31,7 +31,7 @@ def main(arg):
                 frames_segmentation_masks = get_segmentation_mask(model, frames)
                 segmentation_masks.append(frames_segmentation_masks)
             segmentation_mask = torch.cat(segmentation_masks, dim=0)
-            save_segmentation_masks(arg.model, segmentation_mask, video_path, "train")
+            save_segmentation_masks(arg.model, segmentation_mask, video_path, "train", arg.dataset)
 
     for step, (video, video_path) in enumerate(tqdm(test_loader)):
         with torch.no_grad():
@@ -42,7 +42,7 @@ def main(arg):
                 frames_segmentation_masks = get_segmentation_mask(model, frames)
                 segmentation_masks.append(frames_segmentation_masks)
             segmentation_mask = torch.cat(segmentation_masks, dim=0)
-            save_segmentation_masks(arg.model, segmentation_mask, video_path, "test")
+            save_segmentation_masks(arg.model, segmentation_mask, video_path, "test", arg.dataset)
 
 
 if __name__ == '__main__':

@@ -7,6 +7,7 @@ def parse_args():
     parser.add_argument('--name', required=True, type=str)
     parser.add_argument('--dataset', default='kinetics', type=str)
     parser.add_argument('--model', default='slow', type=str)
+    parser.add_argument('--pre_dataset', default='kinetics', type=str)
 
     parser.add_argument('--inference', action='store_true', default=False)
 

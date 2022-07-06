@@ -17,7 +17,7 @@ def main(arg):
 
     # Setup Dataloader and model
     Dataset = get_dataset(arg.dataset)
-    test_dataset = Dataset('test', arg.model)
+    test_dataset = Dataset('test', arg.model, arg.augm, arg.n_augm, arg.app_augm)
     if arg.dataset == 'kinetics':
         test_dataset_subset = torch.utils.data.Subset(test_dataset, range(0, len(test_dataset) // 15))
         test_loader = DataLoader(test_dataset_subset, batch_size=1, shuffle=False, num_workers=8)
@@ -28,13 +28,12 @@ def main(arg):
     # Initialize model
     Model = get_model(arg.model)
     model = Model(num_classes=test_dataset.num_classes, pretrained=True, freeze=False,
-                  keep_head=True, device=device).to(device)
+                  keep_head=True, device=device, pre_dataset=arg.pre_dataset).to(device)
 
     # Definde loss function
     criterion = nn.CrossEntropyLoss()
 
     # Test loop
-    # model = torch.hub.load('facebookresearch/pytorchvideo', 'slow_r50', pretrained=True).to(device)
     model.eval()
     total_loss = 0.0
     stats = {}

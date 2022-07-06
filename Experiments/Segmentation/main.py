@@ -90,7 +90,7 @@ def main(arg):
                 # statistics
                 running_loss += loss.item() * segmentation_masks.size(0)
 
-            # scheduler.step()
+            scheduler.step()
             epoch_loss = running_loss / len(train_dataset)
             wandb.log({"Train Loss": epoch_loss})
             print('Train Loss: {:.4f}'.format(epoch_loss))
@@ -175,11 +175,11 @@ def main(arg):
             epoch_loss = running_loss / len(test_dataset)
             epoch_acc = running_corrects / len(test_dataset)
             stats = dict(sorted(stats.items(), key=lambda item: item[1]["counts"], reverse=True))
-            print(" \n {:<20s} {:<10s} {:<10s} {:<20s}".format("Category", "# Videos", "Loss", "Accuracy (%)"))
-            print("-" * 60)
+            print(" \n {:<40} {:<10s} {:<10s} {:<20s}".format("Category", "# Videos", "Loss", "Accuracy (%)"))
+            print("-" * 80)
             for key in stats.keys():
-                print("{:<20s} {:<10d} {:<10.2f} {:<10.2f}".format(key, stats[key]["counts"], stats[key]["loss"]/stats[key]["counts"], stats[key]["corrects"]/stats[key]["counts"] * 100))
-            print("-" * 50)
+                print("{:<40} {:<10d} {:<10.2f} {:<10.2f}".format(key, stats[key]["counts"], stats[key]["loss"]/stats[key]["counts"], stats[key]["corrects"]/stats[key]["counts"] * 100))
+            print("-" * 70)
             print("{:<20s} {:<10d} {:<10.2f} {:<10.2f}".format(f"Total ({arg.model})", len(test_dataset), epoch_loss, epoch_acc * 100))
         else:
             model.eval()

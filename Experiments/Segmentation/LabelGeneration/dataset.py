@@ -58,18 +58,14 @@ class UCF101(Dataset):
 
         return transform
 
-    def read_ucf_labels(self, path_labels):
-        labels = pd.read_csv(path_labels)["Corresponding Kinetics Labels"].to_list()
-        return labels
-
     def get_videos(self):
         if self.mode == 'train':
-            with open(f'/export/home/phuber/archive/PersonDetection/ucf/{self.model}_train.txt', 'r') as f:
+            with open(f'/export/home/phuber/archive/PersonDetection/ucf/{self.model}/train.txt', 'r') as f:
                 lines = f.readlines()
                 videos = list(map(lambda x: x.split(' ')[0], lines))
 
         else:
-            with open(f'/export/home/phuber/archive/PersonDetection/ucf/{self.model}_test.txt', 'r') as f:
+            with open(f'/export/home/phuber/archive/PersonDetection/ucf/{self.model}/test.txt', 'r') as f:
                 lines = f.readlines()
                 videos = list(map(lambda x: x.split(' ')[0], lines))
 
@@ -135,35 +131,34 @@ class Kinetics400(Dataset):
         self.mode = mode if mode == 'train' else 'eval'
         self.model = model
 
-        self.annotations = self.get_annotations()
+        self.videos = self.get_videos()
         self.categories, self.label_dict = self.get_categories()
 
         # Set transform
         self.transform = self.set_transform()
 
-    def get_annotations(self):
+    def get_videos(self):
         if self.mode == 'train':
-            annotations = pd.read_csv(self.base_path + 'train.csv')
-            with open('/export/home/phuber/archive/valid_train_ids.csv', 'r') as csvfile:
-                reader = csv.reader(csvfile)
-                valid_ids = [int(row[0]) for row in reader if row]
-            annotations = annotations[annotations.index.isin(valid_ids)]
-        else:
-            annotations = pd.read_csv(self.base_path + 'validate.csv')
-            with open('/export/home/phuber/archive/valid_test_ids.csv', 'r') as csvfile:
-                reader = csv.reader(csvfile)
-                valid_ids = [int(row[0]) for row in reader if row]
-            annotations = annotations[annotations.index.isin(valid_ids)]
+            with open(f'/export/home/phuber/archive/PersonDetection/kinetics/{self.model}/train.txt', 'r') as f:
+                lines = f.readlines()
+                videos = list(map(lambda x: x.split(' ')[0], lines))
 
-        return annotations.sort_values(by=['label']).reset_index(drop=True)
+        else:
+            with open(f'/export/home/phuber/archive/PersonDetection/kinetics/{self.model}/test.txt', 'r') as f:
+                lines = f.readlines()
+                videos = list(map(lambda x: x.split(' ')[0], lines))
+
+        videos = list(sorted(set(videos)))
+
+        return videos
 
     def get_categories(self):
         categories = {}
-        for index, row in self.annotations.iterrows():
-            category = row['label']
+        for video in self.videos:
+            category = video.split('/')[-2].replace(' ', '_').lower()
             if category not in categories:
                 categories[category] = []
-            categories[category].append(row['youtube_id'])
+            categories[category].append(video)
 
         # Make dictionary that gives kinetics label for category
         label_dict = {}
@@ -220,12 +215,11 @@ class Kinetics400(Dataset):
         return transform
 
     def __len__(self):
-        return len(self.annotations)
+        return len(self.videos)
 
     def __getitem__(self, item):
         # Get video
-        video_path = self.base_path + self.mode + '/' + self.annotations['label'][item] + '/' + self.annotations['youtube_id'][item]
-        video_path = video_path.replace(' ', '_')
+        video_path = self.videos[item]
         video = self.load_video(video_path)
 
         # Make transformation
@@ -241,3 +235,7 @@ __datasets__ = {'kinetics': Kinetics400,
 
 def get_dataset(dataset_name):
     return __datasets__[dataset_name]
+
+
+if __name__ == '__main__':
+    dataset = Kinetics400(mode='train', model='vimpac')

@@ -19,8 +19,6 @@ class KNN:
         self.ucf_labels = self.read_ucf_labels('/export/home/phuber/Master/I3D_augmentations/labels.csv')
 
         self.all_videos, self.all_embeddings = self.get_all_videos()
-        print(len(self.all_videos))
-        print(len(self.all_embeddings))
         self.categories, self.label_dict = self.get_classification_categories()
         self.videos = np.array([item for sublist in self.categories.values() for item in sublist])
         self.embedding_dim = self.get_embedding_dim()
@@ -172,7 +170,7 @@ class Embeddings:
         self.data_dict, self.category_to_label = self.get_data()
         self.embeddings, self.labels, self.idx_to_category = self.load_embeddings()
         if subset:
-            subset_length = self.embeddings.shape[0] // 10
+            subset_length = self.embeddings.shape[0] // 8
             self.embeddings, self.labels = self.embeddings[:subset_length], self.labels[:subset_length]
 
     def read_kinetics_labels(self):
@@ -212,7 +210,7 @@ class Embeddings:
 
         # Choose selected categories from labels.txt
         valid_categories = []
-        if self.model in ["vimpac", "mae"]:
+        if self.model in []:
             selected_categories = categories
         else:
             for i, (category, sequences) in enumerate(categories.items()):

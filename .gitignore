@@ -2,3 +2,7 @@ model_checkpoints/dalle_ckpts/decoder.pkl
 model_checkpoints/VIMPAC_small/last/classifier.pt
 model_checkpoints/VideoMAE/checkpoint2.pth
 model_checkpoints/VideoMAE/checkpoint.pth
+model_checkpoints/VideoMAE/ssv2_pretrained.pth
+model_checkpoints/VideoMAE/ssv2_finetuned.pth
+model_checkpoints/slowfast/SLOWFAST_16x8_R50.pkl
+CustomVideos/videos/

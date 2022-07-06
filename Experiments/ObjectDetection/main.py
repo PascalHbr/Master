@@ -177,12 +177,12 @@ def main(arg):
             epoch_loss = running_loss / len(test_dataset)
             epoch_acc = running_corrects / len(test_dataset)
             stats = dict(sorted(stats.items(), key=lambda item: item[1]["counts"], reverse=True))
-            print(" \n {:<20s} {:<10s} {:<10s} {:<20s}".format("Category", "# Videos", "Loss", "Accuracy (%)"))
-            print("-" * 60)
+            print(" \n {:<40s} {:<10s} {:<10s} {:<20s}".format("Category", "# Videos", "Loss", "Accuracy (%)"))
+            print("-" * 80)
             for key in stats.keys():
-                print("{:<20s} {:<10d} {:<10.2f} {:<10.2f}".format(key, stats[key]["counts"], stats[key]["loss"]/stats[key]["counts"], stats[key]["corrects"]/stats[key]["counts"] * 100))
-            print("-" * 50)
-            print("{:<20s} {:<10d} {:<10.2f} {:<10.2f}".format(f"Total ({arg.model})", len(test_dataset), epoch_loss, epoch_acc * 100))
+                print("{:<40s} {:<10d} {:<10.2f} {:<10.2f}".format(key, stats[key]["counts"], stats[key]["loss"]/stats[key]["counts"], stats[key]["corrects"]/stats[key]["counts"] * 100))
+            print("-" * 70)
+            print("{:<40s} {:<10d} {:<10.2f} {:<10.2f}".format(f"Total ({arg.model})", len(test_dataset), epoch_loss, epoch_acc * 100))
         else:
             model.eval()
             running_loss = 0.0
@@ -226,12 +226,12 @@ def main(arg):
 
             epoch_loss = running_loss / len(test_dataset)
             stats = dict(sorted(stats.items(), key=lambda item: item[1]["counts"], reverse=True))
-            print(" \n {:<20s} {:<10s} {:<10s}".format("Category", "# Videos", "Loss"))
-            print("-" * 40)
+            print(" \n {:<40s} {:<10s} {:<10s}".format("Category", "# Videos", "Loss"))
+            print("-" * 60)
             for key in stats.keys():
-                print("{:<20s} {:<10d} {:<10.5f}".format(key, stats[key]["counts"], stats[key]["loss"] / stats[key]["counts"]))
-            print("-" * 40)
-            print("{:<20s} {:<10d} {:<10.5f}".format(f"Total ({arg.model})", len(test_dataset), epoch_loss))
+                print("{:<40s} {:<10d} {:<10.5f}".format(key, stats[key]["counts"], stats[key]["loss"] / stats[key]["counts"]))
+            print("-" * 60)
+            print("{:<40s} {:<10d} {:<10.5f}".format(f"Total ({arg.model})", len(test_dataset), epoch_loss))
 
 
 if __name__ == '__main__':

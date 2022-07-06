@@ -253,6 +253,8 @@ class VideoMAE(nn.Module):
 
         if not keep_head:
             self.net.head = nn.Linear(768, num_classes)
+        else:
+            load_from_ckpt(self.net, path='../../model_checkpoints/VideoMAE/checkpoint.pth')
 
     def forward(self, video):
         out = self.net(video)

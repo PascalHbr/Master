@@ -1,6 +1,6 @@
 import wandb
 from urllib import request
-
+import json
 import numpy as np
 import cv2
 from torch.utils.data import Dataset, DataLoader
@@ -45,7 +45,7 @@ class UCF101(Dataset):
         # Specify number of classes
         if task == 'permutation':
             self.num_classes = len(self.permutation_array)
-        elif task in ['blackout', 'freeze']:
+        elif task in ['blackout', 'freeze', 'whiteout']:
             self.num_classes = n_blackout
         elif task == 'reverse':
             self.num_classes = 2
@@ -242,6 +242,7 @@ class UCF101(Dataset):
     def __getitem__(self, item):
         # Get video
         video_path = self.videos[item]
+        print(video_path)
         video = self.load_video(video_path)
 
         # Take model-specific number of frames
@@ -255,37 +256,44 @@ class UCF101(Dataset):
             start_frame = random.randint(0, max(video.shape[0]-n_frames, 0))
         else:
             start_frame = max((video.shape[0] - n_frames) // 2, 0)
-        video = video[start_frame:start_frame + n_frames]
+        video_org = video[start_frame:start_frame + n_frames]
 
         # Get label
         category = video_path.split('/')[-1][2:-12]
         category_idx = self.category_to_idx[category.lower()]
         if self.task == 'reverse':
             label = random.choice([0, 1])
-            video = np.flip(video, 0).copy() if label == 1 else video
+            video = np.flip(video_org, 0).copy() if label == 1 else video_org
         elif self.task == 'permutation':
             label = random.randint(0, len(self.permutation_array)-1)
             permutation = np.array(self.permutation_array[label])
-            chunks = np.array(np.array_split(video, self.n_permute, axis=0), dtype=object)
+            chunks = np.array(np.array_split(video_org, self.n_permute, axis=0), dtype=object)
             video_permutation = chunks[permutation]
             video = np.vstack(video_permutation).astype(np.float32)
         elif self.task == 'blackout':
             label = random.randint(0, self.n_blackout-1)
-            chunks = np.array(np.array_split(video, self.n_blackout, axis=0), dtype=object)
+            chunks = np.array(np.array_split(video_org, self.n_blackout, axis=0), dtype=object)
             chunks[label] = np.zeros_like(chunks[label])
             video = np.vstack(chunks).astype(np.float32)
-            if video.ndim != 4:
+            if video_org.ndim != 4:
+                print("Error at item: ", item)
+        elif self.task == 'whiteout':
+            label = random.randint(0, self.n_blackout-1)
+            chunks = np.array(np.array_split(video_org, self.n_blackout, axis=0), dtype=object)
+            chunks[label] = 255 * np.ones_like(chunks[label])
+            video = np.vstack(chunks).astype(np.float32)
+            if video_org.ndim != 4:
                 print("Error at item: ", item)
         elif self.task == 'freeze':
             label = random.randint(0, self.n_blackout-1)
-            chunks = np.array(np.array_split(video, self.n_blackout, axis=0), dtype=object)
+            chunks = np.array(np.array_split(video_org, self.n_blackout, axis=0), dtype=object)
             frames, _, _, _ = chunks[label].shape
             frames = 1 if frames == 0 else frames
             try:
                 chunks[label] = np.tile(np.expand_dims(chunks[label][0], 0), (frames, 1, 1, 1))
             except:
                 print("Item: ", item)
-                print("Video: ", video.shape)
+                print("Video: ", video_org.shape)
                 print(chunks[0].shape)
                 print(chunks[1].shape)
                 print(chunks[2].shape)
@@ -565,8 +573,291 @@ class Kinetics400(Dataset):
         return video, category_idx, label
 
 
+class SSV2(Dataset):
+    def __init__(self, mode, task, model, n_permute=4, n_blackout=4):
+        self.mode = mode if mode == 'train' else 'validation'
+        self.task = task
+        self.model = model
+
+        self.annotations = self.get_annotations()
+        self.videos, self.labels = self.get_videos()
+        self.categories, self.label_dict = self.get_categories()
+
+        self.idx_to_category = {i: category for i, category in enumerate(self.categories.keys())}
+        self.category_to_idx = {v.lower(): k for k, v in self.idx_to_category.items()}
+
+        # Set transform
+        self.transform = self.set_transform()
+
+        # Task specific parameters
+        self.n_permute = n_permute
+        self.n_blackout = n_blackout
+        self.permutation_array = list(itertools.permutations(range(0, self.n_permute)))
+
+        # Specify number of classes
+        if task == 'permutation':
+            self.num_classes = len(self.permutation_array)
+        elif task in ['blackout', 'freeze', 'whiteout']:
+            self.num_classes = n_blackout
+        elif task == 'reverse':
+            self.num_classes = 2
+
+    def get_annotations(self):
+        label_path = '/export/scratch/compvis/datasets/somethingsomethingv2/labels/' + self.mode + '.json'
+        with open(label_path, 'r') as json_file:
+            annotations = json.load(json_file)
+
+        return annotations
+
+    def get_videos(self):
+        video_base_path = '/export/scratch/compvis/datasets/somethingsomethingv2/20bn-something-something-v2/'
+        videos = [video_base_path + data['id'] + '.webm' for data in self.annotations]
+        labels = [data['template'].replace('[', '').replace(']', '') for data in self.annotations]
+
+        return videos, labels
+
+    def get_categories(self):
+        video_base_path = '/export/scratch/compvis/datasets/somethingsomethingv2/20bn-something-something-v2/'
+        categories = {}
+        for data in self.annotations:
+            category = data['template'].replace('[', '').replace(']', '')
+            if category not in categories:
+                categories[category] = []
+            categories[category].append(video_base_path + data['id'] + '.webm')
+
+        # Make dictionary that gives kinetics label for category
+        label_path = '/export/scratch/compvis/datasets/somethingsomethingv2/labels/labels.json'
+        with open(label_path, 'r') as json_file:
+            label_dict = json.load(json_file)
+
+        print("Found %d videos in %d categories." % (sum(list(map(len, categories.values()))),
+                                                     len(categories)))
+        return categories, label_dict
+
+    def print_summary(self):
+        for category, sequences in self.categories.items():
+            summary = ", ".join(sequences[:1])
+            print("%-20s %4d videos (%s, ...)" % (category, len(sequences), summary))
+
+    def load_video(self, path):
+        cap = cv2.VideoCapture(path)
+        frames = []
+        try:
+            while True:
+                ret, frame = cap.read()
+                if not ret:
+                    break
+                frame = frame[:, :, [2, 1, 0]]
+                frames.append(frame)
+        finally:
+            cap.release()
+
+        return np.array(frames, dtype=np.uint8)
+
+    def set_transform(self):
+        if self.model == 'slow':
+            side_size = 256
+            mean = [0.45, 0.45, 0.45]
+            std = [0.225, 0.225, 0.225]
+            crop_size = 256
+            num_frames = 8
+
+            transform = Compose(
+                [
+                    UniformTemporalSubsample(num_frames),
+                    Lambda(lambda x: x / 255.0),
+                    NormalizeVideo(mean, std),
+                    ShortSideScale(size=side_size),
+                    CenterCropVideo(crop_size=(crop_size, crop_size))
+                ]
+            )
+
+        elif self.model == 'slowfast':
+            side_size = 256
+            mean = [0.45, 0.45, 0.45]
+            std = [0.225, 0.225, 0.225]
+            crop_size = 256
+            num_frames = 32
+            alpha = 4
+
+            transform = Compose(
+                [
+                    UniformTemporalSubsample(num_frames),
+                    Lambda(lambda x: x / 255.0),
+                    NormalizeVideo(mean, std),
+                    ShortSideScale(size=side_size),
+                    CenterCropVideo(crop_size),
+                    PackPathway(alpha)
+                ]
+            )
+
+        elif self.model == 'x3d':
+            mean = [0.45, 0.45, 0.45]
+            std = [0.225, 0.225, 0.225]
+            model_transform_params = {
+                "x3d_xs": {
+                    "side_size": 182,
+                    "crop_size": 182,
+                    "num_frames": 4,
+                    "sampling_rate": 12,
+                },
+                "x3d_s": {
+                    "side_size": 182,
+                    "crop_size": 182,
+                    "num_frames": 13,
+                    "sampling_rate": 6,
+                },
+                "x3d_m": {
+                    "side_size": 256,
+                    "crop_size": 256,
+                    "num_frames": 16,
+                    "sampling_rate": 5,
+                }
+            }
+
+            model_name = 'x3d_m'
+            transform_params = model_transform_params[model_name]
+            transform = Compose(
+                [
+                    UniformTemporalSubsample(transform_params["num_frames"]),
+                    Lambda(lambda x: x / 255.0),
+                    NormalizeVideo(mean, std),
+                    ShortSideScale(size=transform_params["side_size"]),
+                    CenterCropVideo(crop_size=(transform_params["crop_size"], transform_params["crop_size"]))
+                ]
+            )
+
+        elif self.model == 'mvit':
+            side_size = 256
+            mean = [0.45, 0.45, 0.45]
+            std = [0.225, 0.225, 0.225]
+            crop_size = 224
+            num_frames = 16
+
+            transform = Compose(
+                [
+                    UniformTemporalSubsample(num_frames),
+                    Lambda(lambda x: x / 255.0),
+                    NormalizeVideo(mean, std),
+                    ShortSideScale(size=side_size),
+                    CenterCropVideo(crop_size),
+                ]
+            )
+
+        elif self.model == 'vimpac':
+            side_size = 128
+            mean = [0.5, 0.5, 0.5]
+            std = [0.5, 0.5, 0.5]
+            crop_size = 128
+            num_frames = 5
+
+            transform = Compose(
+                [
+                    UniformTemporalSubsample(num_frames),
+                    Lambda(lambda x: x / 255.0),
+                    NormalizeVideo(mean, std),
+                    ShortSideScale(size=side_size),
+                    CenterCropVideo(crop_size),
+                ]
+            )
+
+        elif self.model == 'mae':
+            side_size = 256
+            mean = [0.5, 0.5, 0.5]
+            std = [0.5, 0.5, 0.5]
+            crop_size = 224
+            num_frames = 16
+
+            transform = Compose(
+                [
+                    UniformTemporalSubsample(num_frames),
+                    Lambda(lambda x: x / 255.0),
+                    NormalizeVideo(mean, std),
+                    ShortSideScale(size=side_size),
+                    CenterCropVideo(crop_size),
+                ]
+            )
+
+        return transform
+
+    def __len__(self):
+        return len(self.videos)
+
+    def __getitem__(self, item):
+        # Get video
+        video_path = self.videos[item]
+        video = self.load_video(video_path)
+
+        # Take model-specific number of frames
+        if self.model in ['slow', 'slowfast', 'mvit', 'mae']:
+            n_frames = 64
+        elif self.model == 'x3d':
+            n_frames = 80
+        elif self.model == 'vimpac':
+            n_frames = 32
+        if self.mode == 'train':
+            start_frame = random.randint(0, max(video.shape[0]-n_frames, 0))
+        else:
+            start_frame = max((video.shape[0] - n_frames) // 2, 0)
+        video_org = video[start_frame:start_frame + n_frames]
+
+        # Get label
+        category = self.labels[item]
+        category_idx = self.category_to_idx[category.lower()]
+        if self.task == 'reverse':
+            label = random.choice([0, 1])
+            video = np.flip(video_org, 0).copy() if label == 1 else video_org
+        elif self.task == 'permutation':
+            label = random.randint(0, len(self.permutation_array)-1)
+            permutation = np.array(self.permutation_array[label])
+            chunks = np.array(np.array_split(video_org, self.n_permute, axis=0), dtype=object)
+            video_permutation = chunks[permutation]
+            video = np.vstack(video_permutation).astype(np.float32)
+        elif self.task == 'blackout':
+            label = random.randint(0, self.n_blackout-1)
+            chunks = np.array(np.array_split(video_org, self.n_blackout, axis=0), dtype=object)
+            chunks[label] = np.zeros_like(chunks[label])
+            video = np.vstack(chunks).astype(np.float32)
+            if video_org.ndim != 4:
+                print("Error at item: ", item)
+        elif self.task == 'whiteout':
+            label = random.randint(0, self.n_blackout-1)
+            chunks = np.array(np.array_split(video_org, self.n_blackout, axis=0), dtype=object)
+            chunks[label] = 255 * np.ones_like(chunks[label])
+            video = np.vstack(chunks).astype(np.float32)
+            if video_org.ndim != 4:
+                print("Error at item: ", item)
+        elif self.task == 'freeze':
+            label = random.randint(0, self.n_blackout-1)
+            chunks = np.array(np.array_split(video_org, self.n_blackout, axis=0), dtype=object)
+            frames, _, _, _ = chunks[label].shape
+            frames = 1 if frames == 0 else frames
+            try:
+                chunks[label] = np.tile(np.expand_dims(chunks[label][0], 0), (frames, 1, 1, 1))
+            except:
+                print("Item: ", item)
+                print("Video: ", video_org.shape)
+                print(chunks[0].shape)
+                print(chunks[1].shape)
+                print(chunks[2].shape)
+                print(chunks[3].shape)
+            video = np.vstack(chunks).astype(np.float32)
+            if video.ndim != 4:
+                print("Error at item: ", item)
+
+        # Make transformation
+        video = torch.from_numpy(video).permute(3, 0, 1, 2)
+        video = self.transform(video)
+        if self.model == 'vimpac':
+            video = video.permute(1, 0, 2, 3)
+        label = torch.tensor(label)
+
+        return video, category_idx, label
+
+
 __datasets__ = {'kinetics': Kinetics400,
-                'ucf': UCF101}
+                'ucf': UCF101,
+                'ssv2': SSV2}
 
 
 def get_dataset(dataset_name):
@@ -574,9 +865,12 @@ def get_dataset(dataset_name):
 
 
 if __name__ == '__main__':
-    dataset = UCF101(mode='test', task='reverse', model='slowfast', n_blackout=4)
-    video, category_idx, label = dataset[2013]
+    dataset = SSV2(mode='test', task='whiteout', model='vimpac', n_blackout=5)
+    video, category_idx, label = dataset[3420]
+    print(video.shape)
     print(category_idx)
     print(label)
     # wandb.init(project='Sample Videos')
-    # wandb.log({"video": wandb.Video(video.permute(1, 0, 2, 3).numpy(), fps=4, format="mp4")})
+    # for i, frame in enumerate(video):
+    #     wandb.log({f"frame_{i}": wandb.Image(255*frame.permute(1, 2, 0).numpy())})
+    # wandb.log({"video": wandb.Video(255*video.numpy(), fps=4, format="mp4")})

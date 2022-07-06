@@ -21,9 +21,9 @@ def get_segmentation_mask(model, frames):
     return boolean_person_masks
 
 
-def save_segmentation_masks(model, segmentation_masks, video_path, mode):
+def save_segmentation_masks(model, segmentation_masks, video_path, mode, dataset):
     category = video_path[0].split("/")[-2]
     video_name = video_path[0].split("/")[-1]
-    if not os.path.exists(f'/export/home/phuber/archive/Segmentation/{model}/{mode}/{category}'):
-        os.makedirs(f'/export/home/phuber/archive/Segmentation/{model}/{mode}/{category}')
-    np.save(f'/export/home/phuber/archive/Segmentation/{model}/{mode}/{category}/{video_name[:-4]}.npy', segmentation_masks.detach().cpu().numpy())
+    if not os.path.exists(f'/export/home/phuber/archive/Segmentation/{dataset}/{model}/{mode}/{category}'):
+        os.makedirs(f'/export/home/phuber/archive/Segmentation/{dataset}/{model}/{mode}/{category}')
+    np.save(f'/export/home/phuber/archive/Segmentation/{dataset}/{model}/{mode}/{category}/{video_name[:-4]}.npy', segmentation_masks.detach().cpu().numpy())

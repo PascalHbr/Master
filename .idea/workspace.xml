@@ -4,26 +4,31 @@
     <list default="true" id="6baee463-b97e-4b9c-9922-b24bf48950c5" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CustomVideos/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/CustomVideos/config.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CustomVideos/dataset.py" beforeDir="false" afterPath="$PROJECT_DIR$/CustomVideos/dataset.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CustomVideos/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/CustomVideos/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CustomVideos/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/CustomVideos/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CustomVideos/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/CustomVideos/utils.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Experiments/Classification/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/Classification/config.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Experiments/Classification/dataset.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/Classification/dataset.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Experiments/Classification/mae_utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/Classification/mae_utils.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Experiments/Classification/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/Classification/main.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Experiments/Classification/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/Classification/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Experiments/Classification/vimpac_utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/Classification/vimpac_utils.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Experiments/KNN/EmbeddingGeneration/dataset.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/KNN/EmbeddingGeneration/dataset.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Experiments/KNN/EmbeddingGeneration/generate_embeddings.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/KNN/EmbeddingGeneration/generate_embeddings.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Experiments/KNN/EmbeddingGeneration/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/KNN/EmbeddingGeneration/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Experiments/KNN/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/KNN/config.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Experiments/Heatmap/Mix/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/Heatmap/Mix/config.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Experiments/Heatmap/Mix/dataset.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/Heatmap/Mix/dataset.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Experiments/Heatmap/Mix/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/Heatmap/Mix/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Experiments/Heatmap/Mix/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/Heatmap/Mix/utils.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Experiments/KNN/dataset.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/KNN/dataset.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Experiments/KNN/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/KNN/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Experiments/ObjectDetection/LabelGeneration/dataset.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/ObjectDetection/LabelGeneration/dataset.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Experiments/ObjectDetection/LabelGeneration/generate_labels.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/ObjectDetection/LabelGeneration/generate_labels.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Experiments/ObjectDetection/LabelGeneration/generate_labels_no_person.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/ObjectDetection/LabelGeneration/generate_labels_no_person.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Experiments/ObjectDetection/dataset.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/ObjectDetection/dataset.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Experiments/ObjectDetection/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/ObjectDetection/main.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Experiments/ObjectDetection/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/ObjectDetection/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Experiments/Segmentation/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/Segmentation/config.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Experiments/Segmentation/mae_utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/Segmentation/mae_utils.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Experiments/Segmentation/LabelGeneration/dataset.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/Segmentation/LabelGeneration/dataset.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Experiments/Segmentation/LabelGeneration/generate_labels.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/Segmentation/LabelGeneration/generate_labels.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Experiments/Segmentation/LabelGeneration/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/Segmentation/LabelGeneration/utils.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Experiments/Segmentation/dataset.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/Segmentation/dataset.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Experiments/Segmentation/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/Segmentation/main.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Experiments/Segmentation/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/Segmentation/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Experiments/TimeUnderstanding/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/TimeUnderstanding/config.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Experiments/TimeUnderstanding/dataset.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/TimeUnderstanding/dataset.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Experiments/TimeUnderstanding/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/TimeUnderstanding/main.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Experiments/TimeUnderstanding/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/TimeUnderstanding/models.py" afterDir="false" />
@@ -63,27 +68,28 @@
     <option name="showLibraryContents" value="true" />
   </component>
   <component name="PropertiesComponent">
+    <property name="ASKED_ADD_EXTERNAL_FILES" value="true" />
     <property name="ASKED_MARK_IGNORED_FILES_AS_EXCLUDED" value="true" />
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="WebServerToolWindowFactoryState" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/Experiments/Segmentation" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/model_checkpoints/slowfast" />
     <property name="settings.editor.selected.configurable" value="web.server" />
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
-      <recent name="$PROJECT_DIR$/Experiments/Segmentation" />
-      <recent name="$PROJECT_DIR$/Experiments/Segmentation/LabelGeneration" />
-      <recent name="$PROJECT_DIR$/Experiments/ObjectDetection" />
-      <recent name="$PROJECT_DIR$/Experiments/TimeUnderstanding" />
-      <recent name="$PROJECT_DIR$/Experiments/KNN/EmbeddingGeneration" />
+      <recent name="$PROJECT_DIR$/model_checkpoints/slowfast" />
+      <recent name="$PROJECT_DIR$/model_checkpoints/VideoMAE" />
+      <recent name="$PROJECT_DIR$/Experiments/Heatmap/Mix" />
+      <recent name="$PROJECT_DIR$/CustomVideos" />
+      <recent name="$PROJECT_DIR$/CustomVideos/videos" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/Experiments/Heatmap/LabelGeneration" />
       <recent name="$PROJECT_DIR$/Experiments/ObjectDetection" />
       <recent name="$PROJECT_DIR$/Experiments/Classification" />
       <recent name="$PROJECT_DIR$/Archive" />
       <recent name="$PROJECT_DIR$/Experiments/TimeUnderstanding" />
-      <recent name="$PROJECT_DIR$/Experiments/ObjectDetection/LabelGeneration" />
     </key>
   </component>
   <component name="RunManager">
@@ -134,7 +140,15 @@
       <workItem from="1652279985788" duration="597000" />
       <workItem from="1652699534581" duration="2000" />
       <workItem from="1652701785035" duration="8424000" />
-      <workItem from="1652784988952" duration="31597000" />
+      <workItem from="1652784988952" duration="35815000" />
+      <workItem from="1653473915236" duration="10708000" />
+      <workItem from="1653491651306" duration="5592000" />
+      <workItem from="1653646062314" duration="615000" />
+      <workItem from="1654071539712" duration="955000" />
+      <workItem from="1654095317154" duration="11578000" />
+      <workItem from="1654160249275" duration="617000" />
+      <workItem from="1654510837162" duration="92706000" />
+      <workItem from="1655290015329" duration="55572000" />
     </task>
     <servers />
   </component>
@@ -153,6 +167,6 @@
     </option>
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/Master$main.coverage" NAME="main Coverage Results" MODIFIED="1652864768983" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Experiments/Segmentation" />
+    <SUITE FILE_PATH="coverage/Master$main.coverage" NAME="main Coverage Results" MODIFIED="1657126739411" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Experiments/Segmentation" />
   </component>
 </project>

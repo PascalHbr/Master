@@ -16,7 +16,7 @@ from mae_utils import vit_base_patch16_224, load_from_ckpt
 
 
 class SlowR50(nn.Module):
-    def __init__(self, num_classes, pretrained=True, freeze=False, keep_head=True, device=None):
+    def __init__(self, num_classes, pretrained=True, freeze=False, keep_head=True, device=None, pre_dataset="kinetics"):
         super(SlowR50, self).__init__()
         self.net = torch.hub.load('facebookresearch/pytorchvideo', 'slow_r50', pretrained=True)
 
@@ -27,9 +27,12 @@ class SlowR50(nn.Module):
 
 
 class SlowFastR50(nn.Module):
-    def __init__(self, num_classes, pretrained=True, freeze=False, keep_head=False, device=None):
+    def __init__(self, num_classes, pretrained=True, freeze=False, keep_head=False, device=None, pre_dataset="kinetics"):
         super(SlowFastR50, self).__init__()
         self.net = torch.hub.load('facebookresearch/pytorchvideo', 'slowfast_r50', pretrained=pretrained)
+        if pre_dataset == "ssv2":
+            model_w = torch.load('../../model_checkpoints/slowfast/SLOWFAST_16x8_R50.pkl')
+            self.net.load_state_dict(model_w["model_state"])
 
         # Freeze baseline
         if freeze:
@@ -50,7 +53,7 @@ class SlowFastR50(nn.Module):
 
 
 class X3D(nn.Module):
-    def __init__(self, num_classes, pretrained=True, freeze=False, keep_head=False, device=None):
+    def __init__(self, num_classes, pretrained=True, freeze=False, keep_head=False, device=None, pre_dataset="kinetics"):
         super(X3D, self).__init__()
         self.net = torch.hub.load('facebookresearch/pytorchvideo', 'x3d_m', pretrained=pretrained)
 
@@ -72,7 +75,7 @@ class X3D(nn.Module):
 
 
 class MViT(nn.Module):
-    def __init__(self, num_classes, pretrained=True, freeze=False, keep_head=False, device=None):
+    def __init__(self, num_classes, pretrained=True, freeze=False, keep_head=False, device=None, pre_dataset="kinetics"):
         super(MViT, self).__init__()
         self.net = mvit_base_16x4(pretrained=pretrained)
 
@@ -95,7 +98,7 @@ class MViT(nn.Module):
 
 
 class VIMPAC(nn.Module):
-    def __init__(self, num_classes, pretrained=True, freeze=False, keep_head=False, device="cpu"):
+    def __init__(self, num_classes, pretrained=True, freeze=False, keep_head=False, device="cpu", pre_dataset="kinetics"):
         super(VIMPAC, self).__init__()
         self.visible = True
         self.device = device
@@ -212,12 +215,12 @@ class VIMPAC(nn.Module):
 
 
 class VideoMAE(nn.Module):
-    def __init__(self, num_classes=400, pretrained=True, freeze=False, keep_head=False, device=None):
+    def __init__(self, num_classes=400, pretrained=True, freeze=False, keep_head=False, device=None, pre_dataset="kinetics"):
         super(VideoMAE, self).__init__()
         self.net = create_model(
             "vit_base_patch16_224",
             pretrained=False,
-            num_classes=400,
+            num_classes=num_classes,
             all_frames=16,
             tubelet_size=2,
             drop_rate=0.,
@@ -227,8 +230,11 @@ class VideoMAE(nn.Module):
             use_mean_pooling=True,
             init_scale=0.001,
         )
-        load_from_ckpt(self.net, path='../../model_checkpoints/VideoMAE/checkpoint.pth')
-        # load_from_ckpt(self.net, path='../../model_checkpoints/VideoMAE/checkpoint2.pth')
+
+        if pre_dataset == "kinetics":
+            load_from_ckpt(self.net, path='../../model_checkpoints/VideoMAE/checkpoint.pth')
+        else:
+            load_from_ckpt(self.net, path='../../model_checkpoints/VideoMAE/ssv2_finetuned.pth')
 
     def forward(self, video):
         out = self.net(video)
@@ -249,5 +255,6 @@ def get_model(model_name):
 
 if __name__ == '__main__':
     frame = torch.ones(2, 3, 16, 224, 224)
-    model = VideoMAE(num_classes=4, pretrained=True, freeze=True)
+    model = VideoMAE(num_classes=4, pretrained=True, freeze=True, pre_dataset="ssv2")
     output = model(frame)
+    print(output.shape)

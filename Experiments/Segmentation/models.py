@@ -15,7 +15,7 @@ from timm.models import create_model
 from mae_utils import vit_base_patch16_224, load_from_ckpt
 
 
-class SlowR50(nn.Module):
+class SlowR50old(nn.Module):
     def __init__(self, device):
         super(SlowR50, self).__init__()
         self.net = torch.hub.load('facebookresearch/pytorchvideo', 'slow_r50', pretrained=True)
@@ -65,7 +65,7 @@ class SlowR50(nn.Module):
         return out
 
 
-class SlowFastR50(nn.Module):
+class SlowFastR50old(nn.Module):
     def __init__(self, device):
         super(SlowFastR50, self).__init__()
         self.net = torch.hub.load('facebookresearch/pytorchvideo', 'slowfast_r50', pretrained=True)
@@ -114,7 +114,7 @@ class SlowFastR50(nn.Module):
         return out
 
 
-class X3D(nn.Module):
+class X3Dold(nn.Module):
     def __init__(self, device):
         super(X3D, self).__init__()
         self.net = torch.hub.load('facebookresearch/pytorchvideo', 'x3d_m', pretrained=True)
@@ -175,6 +175,140 @@ class X3D(nn.Module):
 
     def forward(self, video):
         embedding = self.net(video).unsqueeze(-1).unsqueeze(-1)
+        out = self.decoder(embedding).permute(0, 2, 3, 1)
+
+        return out
+
+
+class SlowR50(nn.Module):
+    def __init__(self, device):
+        super(SlowR50, self).__init__()
+        self.net = torch.hub.load('facebookresearch/pytorchvideo', 'slow_r50', pretrained=True)
+
+        # Replace classification head
+        self.net.blocks._modules['5'] = nn.Conv3d(2048, 2048, kernel_size=1)
+
+        # Freeze baseline
+        for param in self.net.parameters():
+            param.requires_grad = False
+
+        self.decoder = nn.Sequential(
+            nn.ConvTranspose2d(in_channels=2048, out_channels=512, kernel_size=3),
+            # nn.BatchNorm2d(512),
+            nn.ReLU(),
+            nn.ConvTranspose2d(in_channels=512, out_channels=256, kernel_size=4),
+            # nn.BatchNorm2d(256),
+            nn.ReLU(),
+            nn.Upsample(scale_factor=2, mode='nearest'),
+            nn.ConvTranspose2d(in_channels=256, out_channels=128, kernel_size=4),
+            # nn.BatchNorm2d(128),
+            nn.ReLU(),
+            nn.Upsample(scale_factor=2, mode='nearest'),
+            nn.ConvTranspose2d(in_channels=128, out_channels=64, kernel_size=4),
+            # nn.BatchNorm2d(64),
+            nn.ReLU(),
+            nn.Upsample(scale_factor=2, mode='nearest'),
+            nn.ConvTranspose2d(in_channels=64, out_channels=32, kernel_size=5),
+            # nn.BatchNorm2d(32),
+            nn.ReLU(),
+            nn.Upsample(scale_factor=2, mode='nearest'),
+            nn.ConvTranspose2d(in_channels=32, out_channels=16, kernel_size=5),
+            nn.ReLU(),
+            nn.ConvTranspose2d(in_channels=16, out_channels=1, kernel_size=1)
+        )
+
+    def forward(self, video):
+        embedding = torch.mean(self.net(video), dim=2)
+        out = self.decoder(embedding).permute(0, 2, 3, 1)
+
+        return out
+
+
+class SlowFastR50(nn.Module):
+    def __init__(self, device):
+        super(SlowFastR50, self).__init__()
+        self.net = torch.hub.load('facebookresearch/pytorchvideo', 'slowfast_r50', pretrained=True)
+
+        # Replace classification head
+        self.net.blocks._modules['6'] = nn.Identity()
+
+        # Freeze baseline
+        for param in self.net.parameters():
+            param.requires_grad = False
+
+        self.decoder = nn.Sequential(
+            nn.ConvTranspose2d(in_channels=2304, out_channels=512, kernel_size=3),
+            # nn.BatchNorm2d(512),
+            nn.ReLU(),
+            nn.ConvTranspose2d(in_channels=512, out_channels=256, kernel_size=3),
+            # nn.BatchNorm2d(256),
+            nn.ReLU(),
+            nn.Upsample(scale_factor=2, mode='nearest'),
+            nn.ConvTranspose2d(in_channels=256, out_channels=128, kernel_size=3),
+            # nn.BatchNorm2d(128),
+            nn.ReLU(),
+            nn.Upsample(scale_factor=2, mode='nearest'),
+            nn.ConvTranspose2d(in_channels=128, out_channels=64, kernel_size=3),
+            # nn.BatchNorm2d(64),
+            nn.ReLU(),
+            nn.Upsample(scale_factor=2, mode='nearest'),
+            nn.ConvTranspose2d(in_channels=64, out_channels=32, kernel_size=4),
+            # nn.BatchNorm2d(32),
+            nn.ReLU(),
+            nn.Upsample(scale_factor=2, mode='nearest'),
+            nn.ConvTranspose2d(in_channels=32, out_channels=16, kernel_size=3),
+            nn.ReLU(),
+            nn.Upsample(scale_factor=2, mode='nearest'),
+            nn.ConvTranspose2d(in_channels=16, out_channels=1, kernel_size=1),
+        )
+
+    def forward(self, video):
+        embedding = torch.mean(self.net(video), dim=2)
+        out = self.decoder(embedding).permute(0, 2, 3, 1)
+
+        return out
+
+
+class X3D(nn.Module):
+    def __init__(self, device):
+        super(X3D, self).__init__()
+        self.net = torch.hub.load('facebookresearch/pytorchvideo', 'x3d_m', pretrained=True)
+
+        # Replace classification head
+        cls_head = nn.Identity()
+        self.net.blocks._modules['5'] = cls_head
+
+        # Freeze baseline
+        for param in self.net.parameters():
+            param.requires_grad = False
+
+        self.decoder = nn.Sequential(
+            nn.ConvTranspose2d(in_channels=192, out_channels=512, kernel_size=3),
+            # nn.BatchNorm2d(512),
+            nn.ReLU(),
+            nn.ConvTranspose2d(in_channels=512, out_channels=256, kernel_size=4),
+            # nn.BatchNorm2d(256),
+            nn.ReLU(),
+            nn.Upsample(scale_factor=2, mode='nearest'),
+            nn.ConvTranspose2d(in_channels=256, out_channels=128, kernel_size=4),
+            # nn.BatchNorm2d(128),
+            nn.ReLU(),
+            nn.Upsample(scale_factor=2, mode='nearest'),
+            nn.ConvTranspose2d(in_channels=128, out_channels=64, kernel_size=4),
+            # nn.BatchNorm2d(64),
+            nn.ReLU(),
+            nn.Upsample(scale_factor=2, mode='nearest'),
+            nn.ConvTranspose2d(in_channels=64, out_channels=32, kernel_size=5),
+            # nn.BatchNorm2d(32),
+            nn.ReLU(),
+            nn.Upsample(scale_factor=2, mode='nearest'),
+            nn.ConvTranspose2d(in_channels=32, out_channels=16, kernel_size=5),
+            nn.ReLU(),
+            nn.ConvTranspose2d(in_channels=16, out_channels=1, kernel_size=1)
+        )
+
+    def forward(self, video):
+        embedding = torch.mean(self.net(video), dim=2)
         out = self.decoder(embedding).permute(0, 2, 3, 1)
 
         return out
@@ -427,7 +561,7 @@ def get_model(model):
 
 
 if __name__ == '__main__':
-    frame = torch.ones(2, 3, 8, 256, 256)
-    model = SlowR50(device="cpu")
+    frame = torch.ones(2, 3, 16, 256, 256)
+    model = X3D(device="cpu")
     output = model(frame)
     print(output.shape)
