@@ -21,7 +21,7 @@ def main(arg):
         # Initialize model
         Model = get_model(model_name)
         model = Model(num_classes=test_set.num_classes, pretrained=True, freeze=False,
-                      keep_head=True, device=device, pre_dataset=arg.pre_dataset).to(device)
+                      keep_head=True, device=device).to(device)
         model.eval()
 
         if arg.labels or arg.stats:
@@ -31,8 +31,10 @@ def main(arg):
             # Iteration
             for step, (video, video_path, scene_label, action_label, video_org) in enumerate(tqdm(test_loader)):
                 with torch.no_grad():
-                    video = video.to(device)
-                    video.requires_grad = True
+                    if arg.model == 'slowfast':
+                        video = [v.to(device) for v in video]
+                    else:
+                        video = video.to(device)
 
                     # Get predictions
                     preds = model(video)

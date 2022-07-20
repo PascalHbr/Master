@@ -32,7 +32,7 @@ def main(arg):
     # Initialize model
     Model = get_model(arg.model)
     model = Model(num_classes=test_dataset.num_classes, pretrained=arg.pretrained, freeze=arg.freeze,
-                  keep_head=arg.keep_head, device=device).to(device)
+                  keep_head=arg.keep_head, device=device, pre_dataset=arg.pre_dataset).to(device)
 
     # Make directory
     model_save_dir = 'saved_models/' + arg.name

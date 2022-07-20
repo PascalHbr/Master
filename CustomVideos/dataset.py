@@ -270,7 +270,10 @@ class CustomDataset(Dataset):
 
         # Make transformation
         video = torch.from_numpy(video)
-        video_org = self.set_transform(normalize=False)(video).numpy()
+        if self.model == 'slowfast':
+            video_org = self.set_transform(normalize=False)(video)[0].numpy()
+        else:
+            video_org = self.set_transform(normalize=False)(video).numpy()
         video = self.transform(video)
         # Make permutation
         if self.model == 'vimpac':

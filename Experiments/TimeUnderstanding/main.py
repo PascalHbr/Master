@@ -39,6 +39,7 @@ def main(arg):
                   keep_head=arg.keep_head, device=device, pre_dataset=arg.pre_dataset).to(device)
 
     # Definde loss function
+    # criterion = nn.BCEWithLogitsLoss()
     criterion = nn.CrossEntropyLoss()
 
     # Observe that all parameters are being optimized

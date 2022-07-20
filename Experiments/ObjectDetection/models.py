@@ -16,9 +16,17 @@ from mae_utils import vit_base_patch16_224, load_from_ckpt
 
 
 class SlowR50(nn.Module):
-    def __init__(self, num_classes, pretrained=True, freeze=False, keep_head=False, device=None):
+    def __init__(self, num_classes, pretrained=True, freeze=False, keep_head=False, device=None, pre_dataset="kinetics"):
         super(SlowR50, self).__init__()
         self.net = torch.hub.load('facebookresearch/pytorchvideo', 'slow_r50', pretrained=pretrained)
+        if pre_dataset == "ssv2":
+            cls_head = ResNetBasicHead(pool=nn.AvgPool3d(kernel_size=(8, 7, 7), stride=(1, 1, 1), padding=(0, 0, 0)),
+                                       dropout=nn.Dropout(p=0.5, inplace=False),
+                                       proj=nn.Linear(in_features=2048, out_features=174, bias=True),
+                                       output_pool=nn.AdaptiveAvgPool3d(output_size=1))
+            self.net.blocks._modules['5'] = cls_head
+            model_w = torch.load('../../model_checkpoints/slow/SLOW_8x8_R50.pyth', map_location=device)['model_state']
+            self.net.load_state_dict(model_w)
         # Freeze baseline
         if freeze:
             for param in self.net.parameters():
@@ -39,9 +47,16 @@ class SlowR50(nn.Module):
 
 
 class SlowFastR50(nn.Module):
-    def __init__(self, num_classes, pretrained=True, freeze=False, keep_head=False, device=None):
+    def __init__(self, num_classes, pretrained=True, freeze=False, keep_head=False, device=None, pre_dataset="kinetics"):
         super(SlowFastR50, self).__init__()
         self.net = torch.hub.load('facebookresearch/pytorchvideo', 'slowfast_r50', pretrained=pretrained)
+        if pre_dataset == "ssv2":
+            cls_head = ResNetBasicHead(dropout=nn.Dropout(p=0.5, inplace=False),
+                                       proj=nn.Linear(in_features=2304, out_features=174, bias=True),
+                                       output_pool=nn.AdaptiveAvgPool3d(output_size=1))
+            self.net.blocks._modules['6'] = cls_head
+            model_w = torch.load('../../model_checkpoints/slowfast/SLOWFAST_8x8_R50.pyth', map_location=device)['model_state']
+            self.net.load_state_dict(model_w)
 
         # Freeze baseline
         if freeze:
@@ -62,7 +77,7 @@ class SlowFastR50(nn.Module):
 
 
 class X3D(nn.Module):
-    def __init__(self, num_classes, pretrained=True, freeze=False, keep_head=False, device=None):
+    def __init__(self, num_classes, pretrained=True, freeze=False, keep_head=False, device=None, pre_dataset="kinetics"):
         super(X3D, self).__init__()
         self.net = torch.hub.load('facebookresearch/pytorchvideo', 'x3d_m', pretrained=pretrained)
 
@@ -84,7 +99,7 @@ class X3D(nn.Module):
 
 
 class MViT(nn.Module):
-    def __init__(self, num_classes, pretrained=True, freeze=False, keep_head=False, device=None):
+    def __init__(self, num_classes, pretrained=True, freeze=False, keep_head=False, device=None, pre_dataset="kinetics"):
         super(MViT, self).__init__()
         self.net = mvit_base_16x4(pretrained=pretrained)
 
@@ -107,7 +122,7 @@ class MViT(nn.Module):
 
 
 class VIMPAC(nn.Module):
-    def __init__(self, num_classes, pretrained=True, freeze=False, keep_head=False, device="cpu"):
+    def __init__(self, num_classes, pretrained=True, freeze=False, keep_head=False, device="cpu", pre_dataset="kinetics"):
         super(VIMPAC, self).__init__()
         self.visible = True
         self.device = device
@@ -226,7 +241,7 @@ class VIMPAC(nn.Module):
 
 
 class VideoMAE(nn.Module):
-    def __init__(self, num_classes, pretrained=True, freeze=False, keep_head=False, device="cpu"):
+    def __init__(self, num_classes, pretrained=True, freeze=False, keep_head=False, device="cpu", pre_dataset="kinetics"):
         super(VideoMAE, self).__init__()
         self.net = create_model(
             "vit_base_patch16_224",

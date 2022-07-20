@@ -4,5 +4,6 @@ model_checkpoints/VideoMAE/checkpoint2.pth
 model_checkpoints/VideoMAE/checkpoint.pth
 model_checkpoints/VideoMAE/ssv2_pretrained.pth
 model_checkpoints/VideoMAE/ssv2_finetuned.pth
-model_checkpoints/slowfast/SLOWFAST_16x8_R50.pkl
+model_checkpoints/slow/SLOW_8x8_R50.pyth
+model_checkpoints/slowfast/SLOWFAST_8x8_R50.pyth
 CustomVideos/videos/

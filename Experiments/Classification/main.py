@@ -18,7 +18,7 @@ def main(arg):
     # Setup Dataloader and model
     Dataset = get_dataset(arg.dataset)
     test_dataset = Dataset('test', arg.model, arg.augm, arg.n_augm, arg.app_augm)
-    if arg.dataset == 'kinetics':
+    if arg.dataset == 'kinetics_':
         test_dataset_subset = torch.utils.data.Subset(test_dataset, range(0, len(test_dataset) // 15))
         test_loader = DataLoader(test_dataset_subset, batch_size=1, shuffle=False, num_workers=8)
         # test_loader = DataLoader(test_dataset, batch_size=1, shuffle=True, num_workers=8)
@@ -38,6 +38,7 @@ def main(arg):
     total_loss = 0.0
     stats = {}
     total_corrects = 0
+    total_top5_corrects = 0
     total_counts = 0
 
     for step, (video, category_idx, label) in enumerate(tqdm(test_loader)):
@@ -51,34 +52,40 @@ def main(arg):
             # forward
             output = model(video)
             _, pred = torch.max(output, 1)
+            _, top5 = output.topk(5)
             loss = criterion(output, label.view(-1))
 
             # statistics
             total_loss += loss.item() * label.size(0)
             total_corrects += torch.sum(pred == label.data)
+            total_top5_corrects += int(label.item() in top5[0].cpu().detach().numpy().tolist())
             total_counts += 1
             if test_dataset.idx_to_category[category_idx.item()] not in stats:
                 stats[test_dataset.idx_to_category[category_idx.item()]] = {"loss": loss.item(),
                                                                           "corrects": torch.sum(pred == label.data).item(),
+                                                                          "top5_corrects": int(label.item() in top5[0].cpu().detach().numpy().tolist()),
                                                                           "counts": 1}
             else:
                 stats[test_dataset.idx_to_category[category_idx.item()]]["loss"] += loss.item()
                 stats[test_dataset.idx_to_category[category_idx.item()]]["corrects"] += torch.sum(pred == label.data).item()
+                stats[test_dataset.idx_to_category[category_idx.item()]]["top5_corrects"] += int(label.item() in top5[0].cpu().detach().numpy().tolist())
                 stats[test_dataset.idx_to_category[category_idx.item()]]["counts"] += 1
 
     # Print stats
     for category in stats.keys():
-        stats[category]["accuracy"] = stats[category]["corrects"] / stats[category]["counts"] * 100
-    stats = dict(sorted(stats.items(), key=lambda item: item[1]["accuracy"], reverse=True))
-    print(" \n {:<20s} {:<10s} {:<10s} {:<20s}".format("Category", "# Videos", "Loss", "Accuracy (%)"))
+        stats[category]["top1_accuracy"] = stats[category]["corrects"] / stats[category]["counts"] * 100
+        stats[category]["top5_accuracy"] = stats[category]["top5_corrects"] / stats[category]["counts"] * 100
+    stats = dict(sorted(stats.items(), key=lambda item: item[1]["top1_accuracy"], reverse=True))
+    print(" \n {:<20s} {:<10s} {:<10s} {:<20s} {:<20s}".format("Category", "# Videos", "Loss", "Top 1 Accuracy (%)", "Top 5 Accuracy (%)"))
     print("-" * 60)
     for key in stats.keys():
-        print("{:<20s} {:<10d} {:<10.2f} {:<10.2f}".format(key, stats[key]["counts"],
+        print("{:<20s} {:<10d} {:<10.2f} {:<10.2f} {:<10.2f}".format(key, stats[key]["counts"],
                                                            stats[key]["loss"] / stats[key]["counts"],
-                                                           stats[key]["accuracy"]))
+                                                           stats[key]["top1_accuracy"],
+                                                           stats[key]["top5_accuracy"]))
     print("-" * 50)
-    print("{:<20s} {:<10d} {:<10.2f} {:<10.2f}".format("Total", total_counts, total_loss / total_counts,
-                                                       total_corrects / total_counts * 100))
+    print("{:<20s} {:<10d} {:<10.2f} {:<10.2f} {:<10.2f}".format("Total", total_counts, total_loss / total_counts,
+                                                       total_corrects / total_counts * 100, total_top5_corrects / total_counts * 100))
 
 
 if __name__ == '__main__':

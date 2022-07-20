@@ -2,33 +2,21 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="6baee463-b97e-4b9c-9922-b24bf48950c5" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/model_checkpoints/slow/SLOW_8x8_R50.pyth" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/model_checkpoints/slowfast/SLOWFAST_8x8_R50.pyth" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CustomVideos/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/CustomVideos/config.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/CustomVideos/dataset.py" beforeDir="false" afterPath="$PROJECT_DIR$/CustomVideos/dataset.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/CustomVideos/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/CustomVideos/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CustomVideos/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/CustomVideos/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CustomVideos/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/CustomVideos/utils.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Experiments/Classification/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/Classification/config.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Experiments/Classification/dataset.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/Classification/dataset.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Experiments/Classification/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/Classification/main.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Experiments/Classification/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/Classification/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Experiments/Heatmap/Mix/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/Heatmap/Mix/config.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Experiments/Heatmap/Mix/dataset.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/Heatmap/Mix/dataset.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Experiments/Heatmap/Mix/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/Heatmap/Mix/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Experiments/Heatmap/Mix/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/Heatmap/Mix/utils.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Experiments/KNN/dataset.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/KNN/dataset.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Experiments/ObjectDetection/LabelGeneration/generate_labels_no_person.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/ObjectDetection/LabelGeneration/generate_labels_no_person.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Experiments/ObjectDetection/dataset.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/ObjectDetection/dataset.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Experiments/ObjectDetection/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/ObjectDetection/config.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Experiments/ObjectDetection/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/ObjectDetection/main.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Experiments/ObjectDetection/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/ObjectDetection/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Experiments/Segmentation/LabelGeneration/dataset.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/Segmentation/LabelGeneration/dataset.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Experiments/Segmentation/LabelGeneration/generate_labels.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/Segmentation/LabelGeneration/generate_labels.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Experiments/Segmentation/LabelGeneration/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/Segmentation/LabelGeneration/utils.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Experiments/Segmentation/dataset.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/Segmentation/dataset.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Experiments/Segmentation/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/Segmentation/config.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Experiments/Segmentation/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/Segmentation/main.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Experiments/Segmentation/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/Segmentation/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Experiments/TimeUnderstanding/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/TimeUnderstanding/config.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Experiments/TimeUnderstanding/dataset.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/TimeUnderstanding/dataset.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Experiments/TimeUnderstanding/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/TimeUnderstanding/main.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Experiments/TimeUnderstanding/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/Experiments/TimeUnderstanding/models.py" afterDir="false" />
@@ -85,11 +73,11 @@
       <recent name="$PROJECT_DIR$/CustomVideos/videos" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/model_checkpoints/slow" />
       <recent name="$PROJECT_DIR$/Experiments/Heatmap/LabelGeneration" />
       <recent name="$PROJECT_DIR$/Experiments/ObjectDetection" />
       <recent name="$PROJECT_DIR$/Experiments/Classification" />
       <recent name="$PROJECT_DIR$/Archive" />
-      <recent name="$PROJECT_DIR$/Experiments/TimeUnderstanding" />
     </key>
   </component>
   <component name="RunManager">
@@ -148,7 +136,8 @@
       <workItem from="1654095317154" duration="11578000" />
       <workItem from="1654160249275" duration="617000" />
       <workItem from="1654510837162" duration="92706000" />
-      <workItem from="1655290015329" duration="55572000" />
+      <workItem from="1655290015329" duration="76712000" />
+      <workItem from="1658237799171" duration="6495000" />
     </task>
     <servers />
   </component>

@@ -30,7 +30,7 @@ def main(arg):
 
     # Initialize model
     Model = get_model(arg.model)
-    model = Model(device=device).to(device)
+    model = Model(device=device, pre_dataset=arg.pre_dataset).to(device)
 
     # Make directory
     model_save_dir = 'saved_models/' + arg.name

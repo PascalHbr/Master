@@ -18,6 +18,7 @@ from torchvision.transforms._transforms_video import (
     CenterCropVideo,
     NormalizeVideo,
 )
+import time
 
 from pytorchvideo.transforms import (
     ShortSideScale,
@@ -183,6 +184,12 @@ class UCF101(Dataset):
                     "crop_size": 256,
                     "num_frames": 16,
                     "sampling_rate": 5,
+                },
+                "x3d_l": {
+                    "side_size": 356,
+                    "crop_size": 356,
+                    "num_frames": 16,
+                    "sampling_rate": 5,
                 }
             }
 
@@ -263,7 +270,7 @@ class UCF101(Dataset):
 
         if 'saturation' in self.app_augm:
             video = kornia.enhance.adjust_saturation(video.unsqueeze(0).permute(0, 2, 1, 3, 4), 1 - self.app_augm_factor)
-            video = video.permute(0, 1, 3, 4, 2).squeeze(0)
+            video = video.permute(0, 2, 1, 3, 4).squeeze(0)
 
         if 'hue' in self.app_augm:  # should be in [-pi, pi]
             video = kornia.enhance.adjust_hue(video.unsqueeze(0).permute(0, 2, 1, 3, 4), self.app_augm_factor)
@@ -369,7 +376,7 @@ class UCF101(Dataset):
 
 
 class Kinetics400(Dataset):
-    def __init__(self, mode, model):
+    def __init__(self, mode, model, augm=None, n_augm=5, app_augm=None):
         self.base_path = '/export/data/compvis/kinetics/'
         self.mode = mode if mode == 'train' else 'eval'
         self.model = model
@@ -426,8 +433,9 @@ class Kinetics400(Dataset):
         frames = []
         for filename in sorted(glob.glob(path + '/*.jpg')):
             frame = cv2.imread(filename)
-            frame = frame[:, :, [2, 1, 0]]  # BGR -> RGB TODO: see if it matters
+            frame = frame[:, :, [2, 1, 0]]
             frames.append(frame)
+            time.sleep(0.001)
 
         return np.array(frames, dtype=np.uint8)
 
@@ -489,6 +497,12 @@ class Kinetics400(Dataset):
                     "crop_size": 256,
                     "num_frames": 16,
                     "sampling_rate": 5,
+                },
+                "x3d_l": {
+                    "side_size": 356,
+                    "crop_size": 356,
+                    "num_frames": 16,
+                    "sampling_rate": 5,
                 }
             }
 
@@ -505,7 +519,7 @@ class Kinetics400(Dataset):
             )
 
         elif self.model == 'mvit':
-            side_size = 256  # TODO: See if it should be 224
+            side_size = 256
             mean = [0.45, 0.45, 0.45]
             std = [0.225, 0.225, 0.225]
             crop_size = 224
@@ -595,7 +609,7 @@ class Kinetics400(Dataset):
 
 
 class SSV2(Dataset):
-    def __init__(self, mode, model, augm=None, n_augm=5):
+    def __init__(self, mode, model, augm=None, n_augm=5, app_augm=None):
         self.mode = mode if mode == 'train' else 'validation'
         self.model = model
 
@@ -726,6 +740,12 @@ class SSV2(Dataset):
                 "x3d_m": {
                     "side_size": 256,
                     "crop_size": 256,
+                    "num_frames": 16,
+                    "sampling_rate": 5,
+                },
+                "x3d_l": {
+                    "side_size": 312,
+                    "crop_size": 312,
                     "num_frames": 16,
                     "sampling_rate": 5,
                 }
@@ -878,9 +898,10 @@ def get_dataset(dataset_name):
 
 
 if __name__ == '__main__':
-    dataset = SSV2(mode='test', model='mvit', augm='freeze', n_augm=1)
+    dataset = UCF101(mode='test', model='slowfast', augm='freeze', n_augm=1)
     video, category_idx, label = dataset[-1]
-    print(video.shape)
+    print(video[0].shape)
+    print(video[1].shape)
     print(category_idx)
     print(label)
     # wandb.init(project='Sample Videos')

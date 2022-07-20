@@ -17,7 +17,7 @@ from mae_utils import vit_base_patch16_224, load_from_ckpt
 
 class SlowR50old(nn.Module):
     def __init__(self, device):
-        super(SlowR50, self).__init__()
+        super(SlowR50old, self).__init__()
         self.net = torch.hub.load('facebookresearch/pytorchvideo', 'slow_r50', pretrained=True)
 
         # Replace classification head
@@ -67,7 +67,7 @@ class SlowR50old(nn.Module):
 
 class SlowFastR50old(nn.Module):
     def __init__(self, device):
-        super(SlowFastR50, self).__init__()
+        super(SlowFastR50old, self).__init__()
         self.net = torch.hub.load('facebookresearch/pytorchvideo', 'slowfast_r50', pretrained=True)
 
         # Replace classification head
@@ -116,7 +116,7 @@ class SlowFastR50old(nn.Module):
 
 class X3Dold(nn.Module):
     def __init__(self, device):
-        super(X3D, self).__init__()
+        super(X3Dold, self).__init__()
         self.net = torch.hub.load('facebookresearch/pytorchvideo', 'x3d_m', pretrained=True)
 
         # Replace classification head
@@ -181,9 +181,17 @@ class X3Dold(nn.Module):
 
 
 class SlowR50(nn.Module):
-    def __init__(self, device):
+    def __init__(self, device, pre_dataset="kinetics"):
         super(SlowR50, self).__init__()
         self.net = torch.hub.load('facebookresearch/pytorchvideo', 'slow_r50', pretrained=True)
+        if pre_dataset == "ssv2":
+            cls_head = ResNetBasicHead(pool=nn.AvgPool3d(kernel_size=(8, 7, 7), stride=(1, 1, 1), padding=(0, 0, 0)),
+                                       dropout=nn.Dropout(p=0.5, inplace=False),
+                                       proj=nn.Linear(in_features=2048, out_features=174, bias=True),
+                                       output_pool=nn.AdaptiveAvgPool3d(output_size=1))
+            self.net.blocks._modules['5'] = cls_head
+            model_w = torch.load('../../model_checkpoints/slow/SLOW_8x8_R50.pyth', map_location=device)['model_state']
+            self.net.load_state_dict(model_w)
 
         # Replace classification head
         self.net.blocks._modules['5'] = nn.Conv3d(2048, 2048, kernel_size=1)
@@ -225,9 +233,16 @@ class SlowR50(nn.Module):
 
 
 class SlowFastR50(nn.Module):
-    def __init__(self, device):
+    def __init__(self, device, pre_dataset="kinetics"):
         super(SlowFastR50, self).__init__()
         self.net = torch.hub.load('facebookresearch/pytorchvideo', 'slowfast_r50', pretrained=True)
+        if pre_dataset == "ssv2":
+            cls_head = ResNetBasicHead(dropout=nn.Dropout(p=0.5, inplace=False),
+                                       proj=nn.Linear(in_features=2304, out_features=174, bias=True),
+                                       output_pool=nn.AdaptiveAvgPool3d(output_size=1))
+            self.net.blocks._modules['6'] = cls_head
+            model_w = torch.load('../../model_checkpoints/slowfast/SLOWFAST_8x8_R50.pyth', map_location=device)['model_state']
+            self.net.load_state_dict(model_w)
 
         # Replace classification head
         self.net.blocks._modules['6'] = nn.Identity()
@@ -270,7 +285,7 @@ class SlowFastR50(nn.Module):
 
 
 class X3D(nn.Module):
-    def __init__(self, device):
+    def __init__(self, device, pre_dataset="kinetics"):
         super(X3D, self).__init__()
         self.net = torch.hub.load('facebookresearch/pytorchvideo', 'x3d_m', pretrained=True)
 
@@ -315,7 +330,7 @@ class X3D(nn.Module):
 
 
 class MViT(nn.Module):
-    def __init__(self, device):
+    def __init__(self, device, pre_dataset="kinetics"):
         super(MViT, self).__init__()
         self.net = mvit_base_16x4(pretrained=True)
 
@@ -364,7 +379,7 @@ class MViT(nn.Module):
 
 
 class VIMPAC(nn.Module):
-    def __init__(self, device="cpu"):
+    def __init__(self, device="cpu", pre_dataset="kinetics"):
         super(VIMPAC, self).__init__()
         self.visible = True
         self.device = device
@@ -490,7 +505,7 @@ class VIMPAC(nn.Module):
 
 
 class VideoMAE(nn.Module):
-    def __init__(self, device=None):
+    def __init__(self, device=None, pre_dataset="kinetics"):
         super(VideoMAE, self).__init__()
         self.net = create_model(
             "vit_base_patch16_224",

@@ -47,7 +47,7 @@ class UCF101(Dataset):
             self.num_classes = len(self.permutation_array)
         elif task in ['blackout', 'freeze', 'whiteout']:
             self.num_classes = n_blackout
-        elif task == 'reverse':
+        elif task in ['reverse', 'permutation_cfk']:
             self.num_classes = 2
 
     def read_kinetics_labels(self):
@@ -242,7 +242,6 @@ class UCF101(Dataset):
     def __getitem__(self, item):
         # Get video
         video_path = self.videos[item]
-        print(video_path)
         video = self.load_video(video_path)
 
         # Take model-specific number of frames
@@ -270,6 +269,10 @@ class UCF101(Dataset):
             chunks = np.array(np.array_split(video_org, self.n_permute, axis=0), dtype=object)
             video_permutation = chunks[permutation]
             video = np.vstack(video_permutation).astype(np.float32)
+        elif self.task == 'permutation_cfk':
+            label = random.choice([0, 1])
+            permutation = np.random.permutation(video_org.shape[0])
+            video = video_org[permutation] if label == 1 else video_org
         elif self.task == 'blackout':
             label = random.randint(0, self.n_blackout-1)
             chunks = np.array(np.array_split(video_org, self.n_blackout, axis=0), dtype=object)
@@ -599,7 +602,7 @@ class SSV2(Dataset):
             self.num_classes = len(self.permutation_array)
         elif task in ['blackout', 'freeze', 'whiteout']:
             self.num_classes = n_blackout
-        elif task == 'reverse':
+        elif task in ['reverse', 'permutation_cfk']:
             self.num_classes = 2
 
     def get_annotations(self):
@@ -813,6 +816,10 @@ class SSV2(Dataset):
             chunks = np.array(np.array_split(video_org, self.n_permute, axis=0), dtype=object)
             video_permutation = chunks[permutation]
             video = np.vstack(video_permutation).astype(np.float32)
+        elif self.task == 'permutation_cfk':
+            label = random.choice([0, 1])
+            permutation = np.random.permutation(video_org.shape[0])
+            video = video_org[permutation] if label == 1 else video_org
         elif self.task == 'blackout':
             label = random.randint(0, self.n_blackout-1)
             chunks = np.array(np.array_split(video_org, self.n_blackout, axis=0), dtype=object)
@@ -865,7 +872,7 @@ def get_dataset(dataset_name):
 
 
 if __name__ == '__main__':
-    dataset = SSV2(mode='test', task='whiteout', model='vimpac', n_blackout=5)
+    dataset = SSV2(mode='test', task='permutation_cfk', model='mae', n_blackout=5)
     video, category_idx, label = dataset[3420]
     print(video.shape)
     print(category_idx)
