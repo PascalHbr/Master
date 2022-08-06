@@ -16,9 +16,17 @@ from mae_utils import vit_base_patch16_224, load_from_ckpt
 
 
 class SlowR50(nn.Module):
-    def __init__(self, device):
+    def __init__(self, device, dataset="ssv2"):
         super(SlowR50, self).__init__()
         self.net = torch.hub.load('facebookresearch/pytorchvideo', 'slow_r50', pretrained=True)
+        if dataset == "ssv2":
+            cls_head = ResNetBasicHead(pool=nn.AvgPool3d(kernel_size=(8, 7, 7), stride=(1, 1, 1), padding=(0, 0, 0)),
+                                       dropout=nn.Dropout(p=0.5, inplace=False),
+                                       proj=nn.Linear(in_features=2048, out_features=174, bias=True),
+                                       output_pool=nn.AdaptiveAvgPool3d(output_size=1))
+            self.net.blocks._modules['5'] = cls_head
+            model_w = torch.load('../../../model_checkpoints/slow/SLOW_8x8_R50.pyth', map_location=device)['model_state']
+            self.net.load_state_dict(model_w)
 
         # Replace classification head
         cls_head = ResNetBasicHead(pool=nn.AvgPool3d(kernel_size=(8, 7, 7), stride=(1, 1, 1), padding=(0, 0, 0)),
@@ -34,9 +42,16 @@ class SlowR50(nn.Module):
 
 
 class SlowFastR50(nn.Module):
-    def __init__(self, device):
+    def __init__(self, device, dataset="ssv2"):
         super(SlowFastR50, self).__init__()
         self.net = torch.hub.load('facebookresearch/pytorchvideo', 'slowfast_r50', pretrained=True)
+        if dataset == "ssv2":
+            cls_head = ResNetBasicHead(dropout=nn.Dropout(p=0.5, inplace=False),
+                                       proj=nn.Linear(in_features=2304, out_features=174, bias=True),
+                                       output_pool=nn.AdaptiveAvgPool3d(output_size=1))
+            self.net.blocks._modules['6'] = cls_head
+            model_w = torch.load('../../../model_checkpoints/slowfast/SLOWFAST_8x8_R50.pyth', map_location=device)['model_state']
+            self.net.load_state_dict(model_w)
 
         # Replace classification head
         cls_head = ResNetBasicHead(dropout=nn.Dropout(p=0.5, inplace=False),
@@ -199,7 +214,7 @@ class VIMPAC(nn.Module):
 
 
 class VideoMAE(nn.Module):
-    def __init__(self, device=None):
+    def __init__(self, device=None, pretrain="kinetics_supervised"):
         super(VideoMAE, self).__init__()
         self.net = create_model(
             "vit_base_patch16_224",
@@ -214,8 +229,14 @@ class VideoMAE(nn.Module):
             use_mean_pooling=True,
             init_scale=0.001,
         )
-        # load_from_ckpt(self.net, path='../../model_checkpoints/VideoMAE/checkpoint.pth')
-        load_from_ckpt(self.net, path='../../../model_checkpoints/VideoMAE/checkpoint2.pth')
+        if pretrain == "kinetics_supervised":
+            load_from_ckpt(self.net, path='../../model_checkpoints/VideoMAE/checkpoint.pth')
+        elif pretrain == "kinetics_unsupervised":
+            load_from_ckpt(self.net, path='../../../model_checkpoints/VideoMAE/checkpoint2.pth')
+        elif pretrain == "ssv2_supervised":
+            load_from_ckpt(self.net, path='../../../model_checkpoints/VideoMAE/ssv2_finetuned.pth')
+        elif pretrain == "ssv2_unsupervised":
+            load_from_ckpt(self.net, path='../../../model_checkpoints/VideoMAE/ssv2_pretrained.pth')
         self.net.head = nn.Identity()
 
     def forward(self, video):

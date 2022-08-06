@@ -256,10 +256,15 @@ class VideoMAE(nn.Module):
             use_mean_pooling=True,
             init_scale=0.001,
         )
-
-        # Load pretrained weights
-        if pretrained:
+        if pre_dataset == "kinetics_unsupervised":
             load_from_ckpt(self.net, path='../../model_checkpoints/VideoMAE/checkpoint2.pth')
+        elif pre_dataset == "kinetics_supervised":
+            load_from_ckpt(self.net, path='../../model_checkpoints/VideoMAE/checkpoint.pth')
+        elif pre_dataset == "ssv2_unsupervised":
+            load_from_ckpt(self.net, path='../../model_checkpoints/VideoMAE/ssv2_pretrained.pth')
+        elif pre_dataset == "ssv2_supervised":
+            load_from_ckpt(self.net, path='../../model_checkpoints/VideoMAE/ssv2_finetuned.pth')
+        self.net.head = nn.Identity()
 
         # Freeze baseline
         if freeze:

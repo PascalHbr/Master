@@ -7,7 +7,6 @@ from models import *
 import torch.optim as optim
 from torch.optim import lr_scheduler
 from tqdm import tqdm
-import random
 import wandb
 
 

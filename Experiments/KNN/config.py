@@ -5,6 +5,8 @@ def parse_args():
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--model', default='slowfast', type=str)
+    parser.add_argument('--dataset', default='ucf', type=str)
+    parser.add_argument('--name', required=True, type=str)
     parser.add_argument('--cfk', action='store_true', default=False)
     parser.add_argument('--plot', action='store_true', default=False)
 

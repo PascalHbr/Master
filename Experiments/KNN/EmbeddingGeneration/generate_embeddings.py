@@ -26,16 +26,16 @@ def main(arg):
     set_random_seed()
 
     # Train loop
-    for step, (videos, video_paths) in enumerate(tqdm(train_loader)):
-        with torch.no_grad():
-            if arg.model == 'slowfast':
-                videos = [video.to(device) for video in videos]
-            else:
-                videos = videos.to(device)
-
-            # create and save embeddings
-            embeddings = model(videos)
-            save_embedding(arg.model, embeddings, video_paths)
+    # for step, (videos, video_paths) in enumerate(tqdm(train_loader)):
+    #     with torch.no_grad():
+    #         if arg.model == 'slowfast':
+    #             videos = [video.to(device) for video in videos]
+    #         else:
+    #             videos = videos.to(device)
+    #
+    #         # create and save embeddings
+    #         embeddings = model(videos)
+    #         save_embedding(embeddings, video_paths, arg.dataset, arg.name)
 
     # Test loop
     for step, (videos, video_paths) in enumerate(tqdm(test_loader)):
@@ -47,7 +47,7 @@ def main(arg):
 
             # create and save embeddings
             embeddings = model(videos)
-            save_embedding(arg.model, embeddings, video_paths)
+            save_embedding(embeddings, video_paths, arg.dataset, arg.name)
 
 
 if __name__ == '__main__':

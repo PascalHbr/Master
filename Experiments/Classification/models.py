@@ -133,7 +133,7 @@ class VIMPAC(nn.Module):
                 args=None,
             )),
             ("dropout", nn.Dropout(0.3)),
-            ("cls_fc", nn.Linear(512, num_classes)),
+            # ("cls_fc", nn.Linear(512, num_classes)),
         ]))
 
         # Load pretrained weights
@@ -270,7 +270,9 @@ def get_model(model_name):
 
 
 if __name__ == '__main__':
-    frame = torch.ones(2, 3, 16, 356, 356)
-    model = MViT(num_classes=4, pretrained=True, freeze=True, pre_dataset="ssv2", keep_head=True)
-    out = model(frame)
-    print(out.shape)
+    frame = torch.ones(2, 5, 3, 128, 128)
+    model = VideoMAE(num_classes=4, pretrained=True, freeze=False, pre_dataset="kinetics", keep_head=True)
+    print(f'Number of parameters: {sum(p.numel() for p in model.parameters() if p.requires_grad)}')
+    # print(model)
+    # out = model(frame)
+    # print(out.shape)

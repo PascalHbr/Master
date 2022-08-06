@@ -3,7 +3,7 @@ import torch.nn as nn
 from config import parse_args
 from dataset import get_dataset
 from tqdm import tqdm
-from utils import set_random_seed
+from utils import set_random_seed, check_correct
 from torch.utils.data import DataLoader
 from models import get_model
 
@@ -17,7 +17,7 @@ def main(arg):
 
     # Setup Dataloader and model
     Dataset = get_dataset(arg.dataset)
-    test_dataset = Dataset('test', arg.model, arg.augm, arg.n_augm, arg.app_augm)
+    test_dataset = Dataset('test', arg.model, arg.augm, arg.app_augm, num_iterations=3)
     if arg.dataset == 'kinetics_':
         test_dataset_subset = torch.utils.data.Subset(test_dataset, range(0, len(test_dataset) // 15))
         test_loader = DataLoader(test_dataset_subset, batch_size=1, shuffle=False, num_workers=8)
@@ -44,30 +44,37 @@ def main(arg):
     for step, (video, category_idx, label) in enumerate(tqdm(test_loader)):
         with torch.no_grad():
             if arg.model == 'slowfast':
-                video = [vid.to(device) for vid in video]
+                video = [vid.to(device)[0] for vid in video]
             else:
-                video = video.to(device)
+                video = video.to(device)[0]
             label = label.to(device)
 
             # forward
-            output = model(video)
+            output = torch.mean(nn.Softmax(dim=1)(model(video)), dim=0, keepdim=True)
             _, pred = torch.max(output, 1)
             _, top5 = output.topk(5)
             loss = criterion(output, label.view(-1))
 
+            # Debug
+            if arg.debug:
+                if pred != label.data:
+                    print(f"Prediction: {test_dataset.kinetics_labels[pred.item()]}, {pred.item()}")
+                    print(f"Label: {test_dataset.kinetics_labels[label.item()]}, {label.item()}")
+
             # statistics
+            correct = check_correct(pred, label)
             total_loss += loss.item() * label.size(0)
-            total_corrects += torch.sum(pred == label.data)
+            total_corrects += correct
             total_top5_corrects += int(label.item() in top5[0].cpu().detach().numpy().tolist())
             total_counts += 1
             if test_dataset.idx_to_category[category_idx.item()] not in stats:
                 stats[test_dataset.idx_to_category[category_idx.item()]] = {"loss": loss.item(),
-                                                                          "corrects": torch.sum(pred == label.data).item(),
+                                                                          "corrects": correct,
                                                                           "top5_corrects": int(label.item() in top5[0].cpu().detach().numpy().tolist()),
                                                                           "counts": 1}
             else:
                 stats[test_dataset.idx_to_category[category_idx.item()]]["loss"] += loss.item()
-                stats[test_dataset.idx_to_category[category_idx.item()]]["corrects"] += torch.sum(pred == label.data).item()
+                stats[test_dataset.idx_to_category[category_idx.item()]]["corrects"] += correct
                 stats[test_dataset.idx_to_category[category_idx.item()]]["top5_corrects"] += int(label.item() in top5[0].cpu().detach().numpy().tolist())
                 stats[test_dataset.idx_to_category[category_idx.item()]]["counts"] += 1
 

@@ -4,8 +4,8 @@ from config import *
 
 def main(arg):
     if arg.cfk:
-        knn_classifier = KNN(model=arg.model, data='train')
-        queries = Embeddings(model=arg.model, data='test')
+        knn_classifier = KNN(model=arg.model, data='train', name=arg.name, dataset=arg.dataset)
+        queries = Embeddings(model=arg.model, data='test', name=arg.name, dataset=arg.dataset)
 
         stats = {}
         total_corrects = 0
@@ -34,7 +34,7 @@ def main(arg):
         print("{:<20s} {:<10d} {:<10.2f}".format(f"Total ({arg.model})", len(queries), total_accuracy))
 
     if arg.plot:
-        embeddings = Embeddings(model=arg.model, data='train', subset=True)
+        embeddings = Embeddings(model=arg.model, data='test', name=arg.name, dataset=arg.dataset, subset=False)
         embeddings.plot_embeddings()
 
 

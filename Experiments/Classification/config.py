@@ -13,6 +13,8 @@ def parse_args():
     parser.add_argument('--n_augm', default=5, type=int)
     parser.add_argument('--app_augm', type=str)
 
+    parser.add_argument('--debug', action='store_true', default=False)
+
     arg = parser.parse_args()
 
     return arg

@@ -14,14 +14,14 @@ def parse_args():
     parser.add_argument('--blackout', default=None, type=str)
 
     parser.add_argument('--gpu', nargs="+", default=[0], type=int)
-    parser.add_argument('--pretrained', action='store_true', default=False)
-    parser.add_argument('--freeze', action='store_true', default=False)
+    parser.add_argument('--pretrained', action='store_false', default=True)
+    parser.add_argument('--freeze', action='store_false', default=True)
     parser.add_argument('--keep_head', action='store_true', default=False)  # TODO add this
     parser.add_argument('--target', type=str, default="first")
 
-    parser.add_argument('--bn', default=16, type=int)
-    parser.add_argument('--epochs', default=50, type=int)
-    parser.add_argument('--lr', default=0.001, type=float)
+    parser.add_argument('--bn', default=8, type=int)
+    parser.add_argument('--epochs', default=10, type=int)
+    parser.add_argument('--lr', default=0.01, type=float)
 
     arg = parser.parse_args()
 

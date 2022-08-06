@@ -8,7 +8,7 @@ from torch.utils.data import Dataset
 import pandas as pd
 import glob
 import csv
-from utils import PackPathway
+from utils import PackPathway, Shuffler
 import random
 import itertools
 import json
@@ -27,10 +27,12 @@ from pytorchvideo.transforms import (
 
 
 class UCF101(Dataset):
-    def __init__(self, mode, model, augm=None, n_augm=5, app_augm=None):
+    def __init__(self, mode, model, augm=None, app_augm=None, num_iterations=5, normalize_video=True):
         self.dataset_path = "/export/scratch/compvis/datasets/UCF101/videos"
         self.mode = mode
         self.model = model
+        self.num_iterations = num_iterations
+        self.normalize_video = normalize_video
 
         self.kinetics_labels = self.read_kinetics_labels()
         self.ucf_labels = self.read_ucf_labels('/export/home/phuber/Master/I3D_augmentations/labels.csv')
@@ -48,12 +50,12 @@ class UCF101(Dataset):
         self.num_classes = 101
 
         # Set augmentation
+        self.shuffler = Shuffler()
         self.augm = augm
-        self.n_augm = n_augm
         self.app_augm = app_augm
-        self.app_augm_factor = 0.3
-        if self.augm:
-            self.permutation_array = list(itertools.permutations(range(0, self.n_augm)))
+        self.brightness_factor = 0.5
+        self.saturation_factor = 0.9
+        self.hue_factor = 2.0
 
     def read_kinetics_labels(self):
         KINETICS_URL = "https://raw.githubusercontent.com/deepmind/kinetics-i3d/master/data/label_map.txt"
@@ -129,7 +131,7 @@ class UCF101(Dataset):
             side_size = 256
             mean = [0.45, 0.45, 0.45]
             std = [0.225, 0.225, 0.225]
-            crop_size = 256
+            self.crop_size = 256
             num_frames = 8
 
             transform = Compose(
@@ -137,7 +139,7 @@ class UCF101(Dataset):
                     UniformTemporalSubsample(num_frames),
                     Lambda(lambda x: x / 255.0),
                     ShortSideScale(size=side_size),
-                    CenterCropVideo(crop_size=(crop_size, crop_size))
+                    CenterCropVideo(crop_size=(self.crop_size, self.crop_size))
                 ]
             )
 
@@ -147,7 +149,7 @@ class UCF101(Dataset):
             side_size = 256
             mean = [0.45, 0.45, 0.45]
             std = [0.225, 0.225, 0.225]
-            crop_size = 256
+            self.crop_size = 256
             num_frames = 32
             alpha = 4
 
@@ -156,7 +158,7 @@ class UCF101(Dataset):
                     UniformTemporalSubsample(num_frames),
                     Lambda(lambda x: x / 255.0),
                     ShortSideScale(size=side_size),
-                    CenterCropVideo(crop_size),
+                    CenterCropVideo(self.crop_size),
                     PackPathway(alpha)
                 ]
             )
@@ -195,12 +197,13 @@ class UCF101(Dataset):
 
             model_name = 'x3d_m'
             transform_params = model_transform_params[model_name]
+            self.crop_size = transform_params["crop_size"]
             transform = Compose(
                 [
                     UniformTemporalSubsample(transform_params["num_frames"]),
                     Lambda(lambda x: x / 255.0),
                     ShortSideScale(size=transform_params["side_size"]),
-                    CenterCropVideo(crop_size=(transform_params["crop_size"], transform_params["crop_size"]))
+                    CenterCropVideo(crop_size=(self.crop_size, self.crop_size))
                 ]
             )
 
@@ -210,7 +213,7 @@ class UCF101(Dataset):
             side_size = 256
             mean = [0.45, 0.45, 0.45]
             std = [0.225, 0.225, 0.225]
-            crop_size = 224
+            self.crop_size = 224
             num_frames = 16
 
             transform = Compose(
@@ -218,7 +221,7 @@ class UCF101(Dataset):
                     UniformTemporalSubsample(num_frames),
                     Lambda(lambda x: x / 255.0),
                     ShortSideScale(size=side_size),
-                    CenterCropVideo(crop_size),
+                    CenterCropVideo(self.crop_size),
                 ]
             )
 
@@ -228,7 +231,7 @@ class UCF101(Dataset):
             side_size = 128
             mean = [0.5, 0.5, 0.5]
             std = [0.5, 0.5, 0.5]
-            crop_size = 128
+            self.crop_size = 128
             num_frames = 5
 
             transform = Compose(
@@ -236,7 +239,7 @@ class UCF101(Dataset):
                     UniformTemporalSubsample(num_frames),
                     Lambda(lambda x: x / 255.0),
                     ShortSideScale(size=side_size),
-                    CenterCropVideo(crop_size),
+                    CenterCropVideo(self.crop_size),
                 ]
             )
 
@@ -246,7 +249,7 @@ class UCF101(Dataset):
             side_size = 256
             mean = [0.5, 0.5, 0.5]
             std = [0.5, 0.5, 0.5]
-            crop_size = 224
+            self.crop_size = 224
             num_frames = 16
 
             transform = Compose(
@@ -254,7 +257,7 @@ class UCF101(Dataset):
                     UniformTemporalSubsample(num_frames),
                     Lambda(lambda x: x / 255.0),
                     ShortSideScale(size=side_size),
-                    CenterCropVideo(crop_size),
+                    CenterCropVideo(self.crop_size),
                 ]
             )
 
@@ -264,16 +267,31 @@ class UCF101(Dataset):
 
     def augment_video(self, video):
         # Only use the middle frame of the video
+        if 'shuffle_8' in self.app_augm:
+            video = self.shuffler.patchify(video, patch_size=self.crop_size//32, crop_size=self.crop_size)
+
+        if 'shuffle_16' in self.app_augm:
+            video = self.shuffler.patchify(video, patch_size=self.crop_size//16, crop_size=self.crop_size)
+
+        if 'shuffle_32' in self.app_augm:
+            video = self.shuffler.patchify(video, patch_size=self.crop_size//8, crop_size=self.crop_size)
+
+        if 'shuffle_64' in self.app_augm:
+            video = self.shuffler.patchify(video, patch_size=self.crop_size//4, crop_size=self.crop_size)
+
+        if 'shuffle_128' in self.app_augm:
+            video = self.shuffler.patchify(video, patch_size=self.crop_size//2, crop_size=self.crop_size)
+
         if 'brightness' in self.app_augm:
-            video = kornia.enhance.adjust_brightness(video.unsqueeze(0).permute(0, 2, 1, 3, 4), self.app_augm_factor)
+            video = kornia.enhance.adjust_brightness(video.unsqueeze(0).permute(0, 2, 1, 3, 4), self.brightness_factor)
             video = video.permute(0, 2, 1, 3, 4).squeeze(0)
 
         if 'saturation' in self.app_augm:
-            video = kornia.enhance.adjust_saturation(video.unsqueeze(0).permute(0, 2, 1, 3, 4), 1 - self.app_augm_factor)
+            video = kornia.enhance.adjust_saturation(video.unsqueeze(0).permute(0, 2, 1, 3, 4), 1 - self.saturation_factor)
             video = video.permute(0, 2, 1, 3, 4).squeeze(0)
 
         if 'hue' in self.app_augm:  # should be in [-pi, pi]
-            video = kornia.enhance.adjust_hue(video.unsqueeze(0).permute(0, 2, 1, 3, 4), self.app_augm_factor)
+            video = kornia.enhance.adjust_hue(video.unsqueeze(0).permute(0, 2, 1, 3, 4), self.hue_factor)
             video = video.permute(0, 2, 1, 3, 4).squeeze(0)
 
         if 'posterize' in self.app_augm:
@@ -305,91 +323,95 @@ class UCF101(Dataset):
             n_frames = 80
         elif self.model == 'vimpac':
             n_frames = 32
-        if self.mode == 'train':
-            start_frame = random.randint(0, max(video.shape[0]-n_frames, 0))
-        else:
-            start_frame = max((video.shape[0] - n_frames) // 2, 0)
-        video = video[start_frame:start_frame + n_frames]
+        random_frames = [random.randint(0, max(video.shape[0]-n_frames, 0)) for _ in range(self.num_iterations)]
+        videos = [video[f:f + n_frames] for f in random_frames]
 
         # Get label
         category = video_path.split('/')[-1][2:-12]
         label = self.label_dict[category]
+        label = torch.tensor(label)
         category_idx = self.category_to_idx[category.lower()]
 
-        # Make augmentation
-        if self.augm == 'reverse':
-            reverse = random.choice([0, 1])
-            video = np.flip(video, 0).copy() if reverse == 1 else video
-        elif self.augm == 'blackout':
-            blackout_idx = random.randint(0, self.n_augm-1)
-            chunks = np.array(np.array_split(video, self.n_augm, axis=0), dtype=object)
-            chunks[blackout_idx] = np.zeros_like(chunks[blackout_idx])
-            video = np.vstack(chunks).astype(np.float32)
-            if video.ndim != 4:
-                print("Error at item: ", item)
-        elif self.augm == 'whiteout':
-            whiteout_idx = random.randint(0, self.n_augm-1)
-            chunks = np.array(np.array_split(video, self.n_augm, axis=0), dtype=object)
-            chunks[whiteout_idx] = 255 * np.ones_like(chunks[whiteout_idx])
-            video = np.vstack(chunks).astype(np.float32)
-            if video.ndim != 4:
-                print("Error at item: ", item)
-        elif self.augm == 'freeze':
-            freeze_idx = random.randint(0, self.n_augm-1)
-            chunks = np.array(np.array_split(video, self.n_augm, axis=0), dtype=object)
-            frames, _, _, _ = chunks[freeze_idx].shape
-            frames = 1 if frames == 0 else frames
-            chunks[freeze_idx] = np.tile(np.expand_dims(chunks[freeze_idx][0], 0), (frames, 1, 1, 1))
-            video = np.vstack(chunks).astype(np.float32)
+        for i, video in enumerate(videos):
+            # Make augmentation
+            if self.augm == 'reverse':
+                reverse = random.choice([0, 1])
+                video = np.flip(video, 0).copy() if reverse == 1 else video
+            elif self.augm == 'freeze':
+                freeze_idx = random.randint(0, video.shape[0] - 1)
+                video = np.tile(np.expand_dims(video[freeze_idx], 0), (n_frames, 1, 1, 1))
 
-        label = torch.tensor(label)
-        # Make transformation
-        video = torch.from_numpy(video).permute(3, 0, 1, 2)
-        video = self.transform(video)
-        # Make appearance augmentation
-        if self.app_augm:
-            if self.model == 'slowfast':
-                video[0] = self.augment_video(video[0])
-                video[1] = self.augment_video(video[1])
-            else:
-                video = self.augment_video(video)
-        # Make permutation
-        if self.augm == 'permutation':
-            if self.model == 'slowfast':
-                indices_slow = torch.randperm(video[0].shape[1])
-                indices_fast = torch.randperm(video[1].shape[1])
-                video[0] = video[0][:, indices_slow]
-                video[1] = video[1][:, indices_fast]
-            else:
-                indices = torch.randperm(video.shape[1])
-                video = video[:, indices]
-        if self.model == 'vimpac':
-            video = video.permute(1, 0, 2, 3)
-        # Normalize
-        if self.model == 'slowfast':
-            video[0] = self.normalize(video[0])
-            video[1] = self.normalize(video[1])
-        else:
-            video = self.normalize(video)
+            # Make transformation
+            video = torch.from_numpy(video).permute(3, 0, 1, 2)
+            video = self.transform(video)
 
-        return video, category_idx, label
+            # Make appearance augmentation
+            if self.app_augm:
+                if self.model == 'slowfast':
+                    video[0] = self.augment_video(video[0])
+                    video[1] = self.augment_video(video[1])
+                else:
+                    video = self.augment_video(video)
+
+            # Make permutation
+            if self.augm == 'permutation':
+                if self.model == 'slowfast':
+                    indices_slow = torch.randperm(video[0].shape[1])
+                    indices_fast = torch.randperm(video[1].shape[1])
+                    video[0] = video[0][:, indices_slow]
+                    video[1] = video[1][:, indices_fast]
+                else:
+                    indices = torch.randperm(video.shape[1])
+                    video = video[:, indices]
+            if self.model == 'vimpac':
+                video = video.permute(1, 0, 2, 3)
+
+            # Normalize
+            if self.normalize_video:
+                if self.model == 'slowfast':
+                    video[0] = self.normalize(video[0])
+                    video[1] = self.normalize(video[1])
+                else:
+                    video = self.normalize(video)
+
+            if i == 0:
+                if self.model == 'slowfast':
+                    video_tensor = [vid.unsqueeze(0) for vid in video]
+                else:
+                    video_tensor = video.unsqueeze(0)
+            else:
+                if self.model == 'slowfast':
+                    video_tensor = [torch.cat([video_tensor[i], vid.unsqueeze(0)]) for i, vid in enumerate(video)]
+                else:
+                    video_tensor = torch.cat([video_tensor, video.unsqueeze(0)])
+
+        return video_tensor, category_idx, label
 
 
 class Kinetics400(Dataset):
-    def __init__(self, mode, model, augm=None, n_augm=5, app_augm=None):
+    def __init__(self, mode, model, augm=None, app_augm=None, num_iterations=5):
         self.base_path = '/export/data/compvis/kinetics/'
         self.mode = mode if mode == 'train' else 'eval'
         self.model = model
+        self.num_iterations = num_iterations
 
         self.annotations = self.get_annotations()
         self.categories, self.label_dict = self.get_categories()
         self.idx_to_category = {i: category for i, category in enumerate(self.categories)}
         self.category_to_idx = {v.lower(): k for k, v in self.idx_to_category.items()}
 
-        self.transform = self.set_transform()
+        self.transform, self.normalize = self.set_transform()
 
         # Specify number of classes
         self.num_classes = 400
+
+        # Set augmentation
+        self.shuffler = Shuffler()
+        self.augm = augm
+        self.app_augm = app_augm
+        self.brightness_factor = 0.5
+        self.saturation_factor = 0.9
+        self.hue_factor = 2.0
 
     def get_annotations(self):
         if self.mode == 'train':
@@ -444,24 +466,25 @@ class Kinetics400(Dataset):
             side_size = 256
             mean = [0.45, 0.45, 0.45]
             std = [0.225, 0.225, 0.225]
-            crop_size = 256
+            self.crop_size = 256
             num_frames = 8
 
             transform = Compose(
                 [
                     UniformTemporalSubsample(num_frames),
                     Lambda(lambda x: x / 255.0),
-                    NormalizeVideo(mean, std),
                     ShortSideScale(size=side_size),
-                    CenterCropVideo(crop_size=(crop_size, crop_size))
+                    CenterCropVideo(crop_size=(self.crop_size, self.crop_size))
                 ]
             )
+
+            normalize = NormalizeVideo(mean, std)
 
         elif self.model == 'slowfast':
             side_size = 256
             mean = [0.45, 0.45, 0.45]
             std = [0.225, 0.225, 0.225]
-            crop_size = 256
+            self.crop_size = 256
             num_frames = 32
             alpha = 4
 
@@ -469,12 +492,13 @@ class Kinetics400(Dataset):
                 [
                     UniformTemporalSubsample(num_frames),
                     Lambda(lambda x: x / 255.0),
-                    NormalizeVideo(mean, std),
                     ShortSideScale(size=side_size),
-                    CenterCropVideo(crop_size),
+                    CenterCropVideo(self.crop_size),
                     PackPathway(alpha)
                 ]
             )
+
+            normalize = NormalizeVideo(mean, std)
 
         elif self.model == 'x3d':
             mean = [0.45, 0.45, 0.45]
@@ -508,68 +532,116 @@ class Kinetics400(Dataset):
 
             model_name = 'x3d_m'
             transform_params = model_transform_params[model_name]
+            self.crop_size = transform_params["crop_size"]
             transform = Compose(
                 [
                     UniformTemporalSubsample(transform_params["num_frames"]),
                     Lambda(lambda x: x / 255.0),
-                    NormalizeVideo(mean, std),
                     ShortSideScale(size=transform_params["side_size"]),
-                    CenterCropVideo(crop_size=(transform_params["crop_size"], transform_params["crop_size"]))
+                    CenterCropVideo(crop_size=(self.crop_size, self.crop_size))
                 ]
             )
+
+            normalize = NormalizeVideo(mean, std)
 
         elif self.model == 'mvit':
             side_size = 256
             mean = [0.45, 0.45, 0.45]
             std = [0.225, 0.225, 0.225]
-            crop_size = 224
+            self.crop_size = 224
             num_frames = 16
 
             transform = Compose(
                 [
                     UniformTemporalSubsample(num_frames),
                     Lambda(lambda x: x / 255.0),
-                    NormalizeVideo(mean, std),
                     ShortSideScale(size=side_size),
-                    CenterCropVideo(crop_size),
+                    CenterCropVideo(self.crop_size),
                 ]
             )
+
+            normalize = NormalizeVideo(mean, std)
 
         elif self.model == 'vimpac':
             side_size = 128
             mean = [0.5, 0.5, 0.5]
             std = [0.5, 0.5, 0.5]
-            crop_size = 128
+            self.crop_size = 128
             num_frames = 5
 
             transform = Compose(
                 [
                     UniformTemporalSubsample(num_frames),
                     Lambda(lambda x: x / 255.0),
-                    NormalizeVideo(mean, std),
                     ShortSideScale(size=side_size),
-                    CenterCropVideo(crop_size),
+                    CenterCropVideo(self.crop_size),
                 ]
             )
+
+            normalize = NormalizeVideo(mean, std)
 
         elif self.model == 'mae':
             side_size = 256
             mean = [0.5, 0.5, 0.5]
             std = [0.5, 0.5, 0.5]
-            crop_size = 224
+            self.crop_size = 224
             num_frames = 16
 
             transform = Compose(
                 [
                     UniformTemporalSubsample(num_frames),
                     Lambda(lambda x: x / 255.0),
-                    NormalizeVideo(mean, std),
                     ShortSideScale(size=side_size),
-                    CenterCropVideo(crop_size),
+                    CenterCropVideo(self.crop_size),
                 ]
             )
 
-        return transform
+            normalize = NormalizeVideo(mean, std)
+
+        return transform, normalize
+
+    def augment_video(self, video):
+        # Only use the middle frame of the video
+        if 'shuffle_8' in self.app_augm:
+            video = self.shuffler.patchify(video, patch_size=self.crop_size // 32, crop_size=self.crop_size)
+
+        if 'shuffle_16' in self.app_augm:
+            video = self.shuffler.patchify(video, patch_size=self.crop_size // 16, crop_size=self.crop_size)
+
+        if 'shuffle_32' in self.app_augm:
+            video = self.shuffler.patchify(video, patch_size=self.crop_size // 8, crop_size=self.crop_size)
+
+        if 'shuffle_64' in self.app_augm:
+            video = self.shuffler.patchify(video, patch_size=self.crop_size // 4, crop_size=self.crop_size)
+
+        if 'shuffle_128' in self.app_augm:
+            video = self.shuffler.patchify(video, patch_size=self.crop_size // 2, crop_size=self.crop_size)
+
+        if 'brightness' in self.app_augm:
+            video = kornia.enhance.adjust_brightness(video.unsqueeze(0).permute(0, 2, 1, 3, 4), self.brightness_factor)
+            video = video.permute(0, 2, 1, 3, 4).squeeze(0)
+
+        if 'saturation' in self.app_augm:
+            video = kornia.enhance.adjust_saturation(video.unsqueeze(0).permute(0, 2, 1, 3, 4), 1 - self.saturation_factor)
+            video = video.permute(0, 2, 1, 3, 4).squeeze(0)
+
+        if 'hue' in self.app_augm:  # should be in [-pi, pi]
+            video = kornia.enhance.adjust_hue(video.unsqueeze(0).permute(0, 2, 1, 3, 4), self.hue_factor)
+            video = video.permute(0, 2, 1, 3, 4).squeeze(0)
+
+        if 'posterize' in self.app_augm:
+            video = kornia.enhance.posterize(video.unsqueeze(0).permute(0, 2, 1, 3, 4), bits=3)
+            video = video.permute(0, 2, 1, 3, 4).squeeze(0)
+
+        if 'clahe' in self.app_augm:
+            video = kornia.enhance.equalize_clahe(video.unsqueeze(0).permute(0, 2, 1, 3, 4))
+            video = video.permute(0, 2, 1, 3, 4).squeeze(0)
+
+        if 'solarize' in self.app_augm:
+            video = kornia.enhance.solarize(video.unsqueeze(0).permute(0, 2, 1, 3, 4))
+            video = video.permute(0, 2, 1, 3, 4).squeeze(0)
+
+        return video
 
     def __len__(self):
         return len(self.annotations)
@@ -587,31 +659,76 @@ class Kinetics400(Dataset):
             n_frames = 80
         elif self.model == 'vimpac':
             n_frames = 32
-        if self.mode == 'train':
-            start_frame = random.randint(0, max(video.shape[0] - n_frames, 0))
-        else:
-            start_frame = max((video.shape[0] - n_frames) // 2, 0)
-        video = video[start_frame:start_frame + n_frames]
+        random_frames = [random.randint(0, max(video.shape[0] - n_frames, 0)) for _ in range(self.num_iterations)]
+        videos = [video[f:f + n_frames] for f in random_frames]
 
         # Get label
         category = self.annotations['label'][item]
         label = self.label_dict[category]
+        label = torch.tensor(label)
         category_idx = self.category_to_idx[category.lower()]
 
         # Make transformation
-        video = torch.from_numpy(video).permute(3, 0, 1, 2)
-        video = self.transform(video)
-        if self.model == 'vimpac':
-            video = video.permute(1, 0, 2, 3)
-        label = torch.tensor(label)
+        for i, video in enumerate(videos):
+            # Make augmentation
+            if self.augm == 'reverse':
+                reverse = random.choice([0, 1])
+                video = np.flip(video, 0).copy() if reverse == 1 else video
+            elif self.augm == 'freeze':
+                freeze_idx = random.randint(0, video.shape[0] - 1)
+                video = np.tile(np.expand_dims(video[freeze_idx], 0), (n_frames, 1, 1, 1))
 
-        return video, category_idx, label
+            # Make transformation
+            video = torch.from_numpy(video).permute(3, 0, 1, 2)
+            video = self.transform(video)
+
+            # Make appearance augmentation
+            if self.app_augm:
+                if self.model == 'slowfast':
+                    video[0] = self.augment_video(video[0])
+                    video[1] = self.augment_video(video[1])
+                else:
+                    video = self.augment_video(video)
+
+            # Make permutation
+            if self.augm == 'permutation':
+                if self.model == 'slowfast':
+                    indices_slow = torch.randperm(video[0].shape[1])
+                    indices_fast = torch.randperm(video[1].shape[1])
+                    video[0] = video[0][:, indices_slow]
+                    video[1] = video[1][:, indices_fast]
+                else:
+                    indices = torch.randperm(video.shape[1])
+                    video = video[:, indices]
+            if self.model == 'vimpac':
+                video = video.permute(1, 0, 2, 3)
+
+            # Normalize
+            if self.model == 'slowfast':
+                video[0] = self.normalize(video[0])
+                video[1] = self.normalize(video[1])
+            else:
+                video = self.normalize(video)
+
+            if i == 0:
+                if self.model == 'slowfast':
+                    video_tensor = [vid.unsqueeze(0) for vid in video]
+                else:
+                    video_tensor = video.unsqueeze(0)
+            else:
+                if self.model == 'slowfast':
+                    video_tensor = [torch.cat([video_tensor[i], vid.unsqueeze(0)]) for i, vid in enumerate(video)]
+                else:
+                    video_tensor = torch.cat([video_tensor, video.unsqueeze(0)])
+
+        return video_tensor, category_idx, label
 
 
 class SSV2(Dataset):
-    def __init__(self, mode, model, augm=None, n_augm=5, app_augm=None):
+    def __init__(self, mode, model, augm=None, app_augm=None, num_iterations=5):
         self.mode = mode if mode == 'train' else 'validation'
         self.model = model
+        self.num_iterations = num_iterations
 
         self.annotations = self.get_annotations()
         self.videos, self.labels = self.get_videos()
@@ -621,16 +738,18 @@ class SSV2(Dataset):
         self.category_to_idx = {v.lower(): k for k, v in self.idx_to_category.items()}
 
         # Set transformation
-        self.transform = self.set_transform()
+        self.transform, self.normalize = self.set_transform()
 
         # Specify number of classes
         self.num_classes = 174
 
         # Set augmentation
+        self.shuffler = Shuffler()
         self.augm = augm
-        self.n_augm = n_augm
-        if self.augm:
-            self.permutation_array = list(itertools.permutations(range(0, self.n_augm)))
+        self.app_augm = app_augm
+        self.brightness_factor = 0.5
+        self.saturation_factor = 0.9
+        self.hue_factor = 2.0
 
     def get_annotations(self):
         label_path = '/export/scratch/compvis/datasets/somethingsomethingv2/labels/' + self.mode + '.json'
@@ -689,24 +808,25 @@ class SSV2(Dataset):
             side_size = 256
             mean = [0.45, 0.45, 0.45]
             std = [0.225, 0.225, 0.225]
-            crop_size = 256
+            self.crop_size = 256
             num_frames = 8
 
             transform = Compose(
                 [
                     UniformTemporalSubsample(num_frames),
                     Lambda(lambda x: x / 255.0),
-                    NormalizeVideo(mean, std),
                     ShortSideScale(size=side_size),
-                    CenterCropVideo(crop_size=(crop_size, crop_size))
+                    CenterCropVideo(crop_size=(self.crop_size, self.crop_size))
                 ]
             )
+
+            normalize = NormalizeVideo(mean, std)
 
         elif self.model == 'slowfast':
             side_size = 256
             mean = [0.45, 0.45, 0.45]
             std = [0.225, 0.225, 0.225]
-            crop_size = 256
+            self.crop_size = 256
             num_frames = 32
             alpha = 4
 
@@ -714,12 +834,13 @@ class SSV2(Dataset):
                 [
                     UniformTemporalSubsample(num_frames),
                     Lambda(lambda x: x / 255.0),
-                    NormalizeVideo(mean, std),
                     ShortSideScale(size=side_size),
-                    CenterCropVideo(crop_size),
+                    CenterCropVideo(self.crop_size),
                     PackPathway(alpha)
                 ]
             )
+
+            normalize = NormalizeVideo(mean, std)
 
         elif self.model == 'x3d':
             mean = [0.45, 0.45, 0.45]
@@ -744,8 +865,8 @@ class SSV2(Dataset):
                     "sampling_rate": 5,
                 },
                 "x3d_l": {
-                    "side_size": 312,
-                    "crop_size": 312,
+                    "side_size": 356,
+                    "crop_size": 356,
                     "num_frames": 16,
                     "sampling_rate": 5,
                 }
@@ -753,68 +874,116 @@ class SSV2(Dataset):
 
             model_name = 'x3d_m'
             transform_params = model_transform_params[model_name]
+            self.crop_size = transform_params["crop_size"]
             transform = Compose(
                 [
                     UniformTemporalSubsample(transform_params["num_frames"]),
                     Lambda(lambda x: x / 255.0),
-                    NormalizeVideo(mean, std),
                     ShortSideScale(size=transform_params["side_size"]),
-                    CenterCropVideo(crop_size=(transform_params["crop_size"], transform_params["crop_size"]))
+                    CenterCropVideo(crop_size=(self.crop_size, self.crop_size))
                 ]
             )
+
+            normalize = NormalizeVideo(mean, std)
 
         elif self.model == 'mvit':
             side_size = 256
             mean = [0.45, 0.45, 0.45]
             std = [0.225, 0.225, 0.225]
-            crop_size = 224
+            self.crop_size = 224
             num_frames = 16
 
             transform = Compose(
                 [
                     UniformTemporalSubsample(num_frames),
                     Lambda(lambda x: x / 255.0),
-                    NormalizeVideo(mean, std),
                     ShortSideScale(size=side_size),
-                    CenterCropVideo(crop_size),
+                    CenterCropVideo(self.crop_size),
                 ]
             )
+
+            normalize = NormalizeVideo(mean, std)
 
         elif self.model == 'vimpac':
             side_size = 128
             mean = [0.5, 0.5, 0.5]
             std = [0.5, 0.5, 0.5]
-            crop_size = 128
+            self.crop_size = 128
             num_frames = 5
 
             transform = Compose(
                 [
                     UniformTemporalSubsample(num_frames),
                     Lambda(lambda x: x / 255.0),
-                    NormalizeVideo(mean, std),
                     ShortSideScale(size=side_size),
-                    CenterCropVideo(crop_size),
+                    CenterCropVideo(self.crop_size),
                 ]
             )
 
-        elif self.model in ['mae']:
+            normalize = NormalizeVideo(mean, std)
+
+        elif self.model == 'mae':
             side_size = 256
             mean = [0.5, 0.5, 0.5]
             std = [0.5, 0.5, 0.5]
-            crop_size = 224
+            self.crop_size = 224
             num_frames = 16
 
             transform = Compose(
                 [
                     UniformTemporalSubsample(num_frames),
                     Lambda(lambda x: x / 255.0),
-                    NormalizeVideo(mean, std),
                     ShortSideScale(size=side_size),
-                    CenterCropVideo(crop_size),
+                    CenterCropVideo(self.crop_size),
                 ]
             )
 
-        return transform
+            normalize = NormalizeVideo(mean, std)
+
+        return transform, normalize
+
+    def augment_video(self, video):
+        # Only use the middle frame of the video
+        if 'shuffle_8' in self.app_augm:
+            video = self.shuffler.patchify(video, patch_size=self.crop_size // 32, crop_size=self.crop_size)
+
+        if 'shuffle_16' in self.app_augm:
+            video = self.shuffler.patchify(video, patch_size=self.crop_size // 16, crop_size=self.crop_size)
+
+        if 'shuffle_32' in self.app_augm:
+            video = self.shuffler.patchify(video, patch_size=self.crop_size // 8, crop_size=self.crop_size)
+
+        if 'shuffle_64' in self.app_augm:
+            video = self.shuffler.patchify(video, patch_size=self.crop_size // 4, crop_size=self.crop_size)
+
+        if 'shuffle_128' in self.app_augm:
+            video = self.shuffler.patchify(video, patch_size=self.crop_size // 2, crop_size=self.crop_size)
+
+        if 'brightness' in self.app_augm:
+            video = kornia.enhance.adjust_brightness(video.unsqueeze(0).permute(0, 2, 1, 3, 4), self.brightness_factor)
+            video = video.permute(0, 2, 1, 3, 4).squeeze(0)
+
+        if 'saturation' in self.app_augm:
+            video = kornia.enhance.adjust_saturation(video.unsqueeze(0).permute(0, 2, 1, 3, 4), 1 - self.saturation_factor)
+            video = video.permute(0, 2, 1, 3, 4).squeeze(0)
+
+        if 'hue' in self.app_augm:  # should be in [-pi, pi]
+            video = kornia.enhance.adjust_hue(video.unsqueeze(0).permute(0, 2, 1, 3, 4), self.hue_factor)
+            video = video.permute(0, 2, 1, 3, 4).squeeze(0)
+
+        if 'posterize' in self.app_augm:
+            video = kornia.enhance.posterize(video.unsqueeze(0).permute(0, 2, 1, 3, 4), bits=3)
+            video = video.permute(0, 2, 1, 3, 4).squeeze(0)
+
+        if 'clahe' in self.app_augm:
+            video = kornia.enhance.equalize_clahe(video.unsqueeze(0).permute(0, 2, 1, 3, 4))
+            video = video.permute(0, 2, 1, 3, 4).squeeze(0)
+
+        if 'solarize' in self.app_augm:
+            video = kornia.enhance.solarize(video.unsqueeze(0).permute(0, 2, 1, 3, 4))
+            video = video.permute(0, 2, 1, 3, 4).squeeze(0)
+
+        return video
 
     def __len__(self):
         return len(self.videos)
@@ -831,66 +1000,74 @@ class SSV2(Dataset):
             n_frames = 80
         elif self.model == 'vimpac':
             n_frames = 32
-        if self.mode == 'train':
-            start_frame = random.randint(0, max(video.shape[0]-n_frames, 0))
-        else:
-            start_frame = max((video.shape[0] - n_frames) // 2, 0)
-        video = video[start_frame:start_frame + n_frames]
+        random_frames = [random.randint(0, max(video.shape[0] - n_frames, 0)) for _ in range(self.num_iterations)]
+        videos = [video[f:f + n_frames] for f in random_frames]
 
         # Get label
         category = self.labels[item]
         label = int(self.label_dict[category])
+        label = torch.tensor(label)
         category_idx = self.category_to_idx[category.lower()]
 
-        # Make augmentation
-        if self.augm == 'reverse':
-            reverse = random.choice([0, 1])
-            video = np.flip(video, 0).copy() if reverse == 1 else video
-        elif self.augm == 'blackout':
-            blackout_idx = random.randint(0, self.n_augm-1)
-            chunks = np.array(np.array_split(video, self.n_augm, axis=0), dtype=object)
-            chunks[blackout_idx] = np.zeros_like(chunks[blackout_idx])
-            video = np.vstack(chunks).astype(np.float32)
-            if video.ndim != 4:
-                print("Error at item: ", item)
-        elif self.augm == 'whiteout':
-            whiteout_idx = random.randint(0, self.n_augm-1)
-            chunks = np.array(np.array_split(video, self.n_augm, axis=0), dtype=object)
-            chunks[whiteout_idx] = 255 * np.ones_like(chunks[whiteout_idx])
-            video = np.vstack(chunks).astype(np.float32)
-            if video.ndim != 4:
-                print("Error at item: ", item)
-        elif self.augm == 'freeze':
-            freeze_idx = random.randint(0, self.n_augm-1)
-            chunks = np.array(np.array_split(video, self.n_augm, axis=0), dtype=object)
-            frames, _, _, _ = chunks[freeze_idx].shape
-            frames = 1 if frames == 0 else frames
-            chunks[freeze_idx] = np.tile(np.expand_dims(chunks[freeze_idx][0], 0), (frames, 1, 1, 1))
-            video = np.vstack(chunks).astype(np.float32)
+        for i, video in enumerate(videos):
+            # Make augmentation
+            if self.augm == 'reverse':
+                reverse = random.choice([0, 1])
+                video = np.flip(video, 0).copy() if reverse == 1 else video
+            elif self.augm == 'freeze':
+                freeze_idx = random.randint(0, video.shape[0] - 1)
+                video = np.tile(np.expand_dims(video[freeze_idx], 0), (n_frames, 1, 1, 1))
 
-        # Make transformation
-        video = torch.from_numpy(video).permute(3, 0, 1, 2)
-        video = self.transform(video)
-        label = torch.tensor(label)
-        # Make permutation
-        if self.augm == 'permutation':
+            # Make transformation
+            video = torch.from_numpy(video).permute(3, 0, 1, 2)
+            video = self.transform(video)
+
+            # Make appearance augmentation
+            if self.app_augm:
+                if self.model == 'slowfast':
+                    video[0] = self.augment_video(video[0])
+                    video[1] = self.augment_video(video[1])
+                else:
+                    video = self.augment_video(video)
+
+            # Make permutation
+            if self.augm == 'permutation':
+                if self.model == 'slowfast':
+                    indices_slow = torch.randperm(video[0].shape[1])
+                    indices_fast = torch.randperm(video[1].shape[1])
+                    video[0] = video[0][:, indices_slow]
+                    video[1] = video[1][:, indices_fast]
+                else:
+                    indices = torch.randperm(video.shape[1])
+                    video = video[:, indices]
+            if self.model == 'vimpac':
+                video = video.permute(1, 0, 2, 3)
+
+            # Normalize
             if self.model == 'slowfast':
-                indices_slow = torch.randperm(video[0].shape[1])
-                indices_fast = torch.randperm(video[1].shape[1])
-                video[0] = video[0][:, indices_slow]
-                video[1] = video[1][:, indices_fast]
+                video[0] = self.normalize(video[0])
+                video[1] = self.normalize(video[1])
             else:
-                indices = torch.randperm(video.shape[1])
-                video = video[:, indices]
-        if self.model == 'vimpac':
-            video = video.permute(1, 0, 2, 3)
+                video = self.normalize(video)
 
-        return video, category_idx, label
+            if i == 0:
+                if self.model == 'slowfast':
+                    video_tensor = [vid.unsqueeze(0) for vid in video]
+                else:
+                    video_tensor = video.unsqueeze(0)
+            else:
+                if self.model == 'slowfast':
+                    video_tensor = [torch.cat([video_tensor[i], vid.unsqueeze(0)]) for i, vid in enumerate(video)]
+                else:
+                    video_tensor = torch.cat([video_tensor, video.unsqueeze(0)])
+
+        return video_tensor, category_idx, label
 
 
 __datasets__ = {'kinetics': Kinetics400,
                 'ucf': UCF101,
-                'ssv2': SSV2}
+                'ssv2': SSV2,
+                }
 
 
 def get_dataset(dataset_name):
@@ -898,11 +1075,14 @@ def get_dataset(dataset_name):
 
 
 if __name__ == '__main__':
-    dataset = UCF101(mode='test', model='slowfast', augm='freeze', n_augm=1)
-    video, category_idx, label = dataset[-1]
-    print(video[0].shape)
-    print(video[1].shape)
-    print(category_idx)
-    print(label)
-    # wandb.init(project='Sample Videos')
-    # wandb.log({"video": wandb.Video(255*video.permute(1, 0, 2, 3).numpy(), fps=4, format="mp4")})
+    wandb.init(project='Alternations')
+    dataset = UCF101(mode='test', model='mvit', augm=None, app_augm='shuffle_32', normalize_video=False)
+    for app_augm in [None, "shuffle_8", "shuffle_16", "shuffle_32", "shuffle_64", "shuffle_128", "brightness", "saturation",
+                     "hue", "posterize", "clahe", "solarize"]:
+        dataset.app_augm = app_augm
+        video, category_idx, label = dataset[600]
+        # print(category_idx)
+        # print(label)
+        # print(dataset.kinetics_labels[category_idx])
+        wandb.init(project='Alternations')
+        wandb.log({"image": wandb.Image(255*video[0].permute(1, 2, 3, 0).numpy()[12])})

@@ -6,7 +6,7 @@ def parse_args():
 
     parser.add_argument('--name', required=True, type=str)
     parser.add_argument('--dataset', default='ucf', type=str)
-    parser.add_argument('--model', default='slowfast', type=str)
+    parser.add_argument('--model', required=True, type=str)
 
     parser.add_argument('--gpu', nargs="+", default=[0], type=int)
 

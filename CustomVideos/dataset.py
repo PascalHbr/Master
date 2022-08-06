@@ -8,6 +8,7 @@ from torch.utils.data import Dataset, DataLoader
 import pandas as pd
 import glob
 from utils import *
+from torchvideotransforms import video_transforms
 
 from torchvision.transforms import Compose, Lambda
 from torchvision.transforms._transforms_video import (
@@ -224,7 +225,7 @@ class CustomDataset(Dataset):
                 )
 
         elif self.model == 'mae':
-            side_size = 256
+            side_size = 224
             mean = [0.5, 0.5, 0.5]
             std = [0.5, 0.5, 0.5]
             crop_size = 224
@@ -237,7 +238,7 @@ class CustomDataset(Dataset):
                         Lambda(lambda x: x / 255.0),
                         NormalizeVideo(mean, std),
                         ShortSideScale(size=side_size),
-                        CenterCropVideo(crop_size),
+                        # CenterCropVideo(crop_size),
                     ]
                 )
             else:
@@ -246,7 +247,7 @@ class CustomDataset(Dataset):
                         UniformTemporalSubsample(num_frames),
                         Lambda(lambda x: x / 255.0),
                         ShortSideScale(size=side_size),
-                        CenterCropVideo(crop_size),
+                        # CenterCropVideo(crop_size),
                     ]
                 )
 
@@ -293,16 +294,15 @@ def get_dataset(dataset_name):
 
 
 if __name__ == '__main__':
-    model = "slow"
+    model = "mae"
     dataset = CustomDataset(mode='test', model=model)
-    video, video_path, scene_label, action_label, video_org = dataset[2]
-    print(video.shape)
-    print(video_path)
-    print(scene_label)
-    print(action_label)
-    print(video_org.shape)
-    # wandb.init(project='Sample Videos')
-    # wandb.log({"video": wandb.Video(255*video.permute(1, 0, 2, 3).numpy(), fps=4, format="mp4")})
+    wandb.init(project='Adversarial Videos')
+    for i in [3, 7, 10, 14, 15]:
+        video, video_path, scene_label, action_label, video_org = dataset[i-1]
+        print(f"scene label : {dataset.kinetics_labels[scene_label.item()]}")
+        print(f"scene label : {dataset.kinetics_labels[action_label.item()]}")
+        for j in range(8):
+            wandb.log({f"video_{i}": wandb.Image(255*video_org[:, j].transpose((1, 2, 0)))})
 
     # heatmap = np.load(f"/export/home/phuber/archive/Heatmap/ucf/InputXGradient/{model}/tennis/v_TennisSwing_g03_c06_1.npy")
     # wandb.init(project='Heatmap')

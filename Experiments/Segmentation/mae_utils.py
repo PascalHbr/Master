@@ -588,7 +588,7 @@ def load_state_dict(model, state_dict, prefix='', ignore_missing="relative_posit
             print('\n'.join(error_msgs))
 
 
-def load_from_ckpt(model, path, print_keys):
+def load_from_ckpt(model, path):
     checkpoint = torch.load(path, map_location='cpu')
 
     print("Load ckpt from %s" % path)
@@ -648,4 +648,4 @@ def load_from_ckpt(model, path, print_keys):
             new_pos_embed = torch.cat((extra_tokens, pos_tokens), dim=1)
             checkpoint_model['pos_embed'] = new_pos_embed
 
-    load_state_dict(model, checkpoint_model, print_keys=print_keys)
+    load_state_dict(model, checkpoint_model)

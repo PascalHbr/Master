@@ -9,6 +9,8 @@ import glob
 import csv
 import itertools
 from utils import *
+from torch.utils.data.sampler import Sampler
+import time
 
 from torchvision.transforms import Compose, Lambda
 from torchvision.transforms._transforms_video import (
@@ -45,9 +47,9 @@ class UCF101(Dataset):
         # Specify number of classes
         if task == 'permutation':
             self.num_classes = len(self.permutation_array)
-        elif task in ['blackout', 'freeze', 'whiteout']:
+        elif task in ['blackout', 'whiteout']:
             self.num_classes = n_blackout
-        elif task in ['reverse', 'permutation_cfk']:
+        elif task in ['reverse', 'permutation_cfk', 'freeze_cfk']:
             self.num_classes = 2
 
     def read_kinetics_labels(self):
@@ -273,6 +275,10 @@ class UCF101(Dataset):
             label = random.choice([0, 1])
             permutation = np.random.permutation(video_org.shape[0])
             video = video_org[permutation] if label == 1 else video_org
+        elif self.task == 'freeze_cfk':
+            label = random.choice([0, 1])
+            freeze_idx = random.randint(0, video_org.shape[0] - 1)
+            video = np.tile(np.expand_dims(video_org[freeze_idx], 0), (n_frames, 1, 1, 1)) if label == 1 else video_org
         elif self.task == 'blackout':
             label = random.randint(0, self.n_blackout-1)
             chunks = np.array(np.array_split(video_org, self.n_blackout, axis=0), dtype=object)
@@ -286,23 +292,6 @@ class UCF101(Dataset):
             chunks[label] = 255 * np.ones_like(chunks[label])
             video = np.vstack(chunks).astype(np.float32)
             if video_org.ndim != 4:
-                print("Error at item: ", item)
-        elif self.task == 'freeze':
-            label = random.randint(0, self.n_blackout-1)
-            chunks = np.array(np.array_split(video_org, self.n_blackout, axis=0), dtype=object)
-            frames, _, _, _ = chunks[label].shape
-            frames = 1 if frames == 0 else frames
-            try:
-                chunks[label] = np.tile(np.expand_dims(chunks[label][0], 0), (frames, 1, 1, 1))
-            except:
-                print("Item: ", item)
-                print("Video: ", video_org.shape)
-                print(chunks[0].shape)
-                print(chunks[1].shape)
-                print(chunks[2].shape)
-                print(chunks[3].shape)
-            video = np.vstack(chunks).astype(np.float32)
-            if video.ndim != 4:
                 print("Error at item: ", item)
 
         # Make transformation
@@ -338,7 +327,7 @@ class Kinetics400(Dataset):
         # Specify number of classes
         if task == 'permutation':
             self.num_classes = len(self.permutation_array)
-        elif task in ['blackout', 'freeze']:
+        elif task in ['blackout', 'whiteout']:
             self.num_classes = n_blackout
         elif task == 'reverse':
             self.num_classes = 2
@@ -600,9 +589,9 @@ class SSV2(Dataset):
         # Specify number of classes
         if task == 'permutation':
             self.num_classes = len(self.permutation_array)
-        elif task in ['blackout', 'freeze', 'whiteout']:
+        elif task in ['blackout', 'whiteout']:
             self.num_classes = n_blackout
-        elif task in ['reverse', 'permutation_cfk']:
+        elif task in ['reverse', 'permutation_cfk', 'freeze_cfk']:
             self.num_classes = 2
 
     def get_annotations(self):
@@ -820,6 +809,10 @@ class SSV2(Dataset):
             label = random.choice([0, 1])
             permutation = np.random.permutation(video_org.shape[0])
             video = video_org[permutation] if label == 1 else video_org
+        elif self.task == 'freeze_cfk':
+            label = random.choice([0, 1])
+            freeze_idx = random.randint(0, video_org.shape[0] - 1)
+            video = np.tile(np.expand_dims(video_org[freeze_idx], 0), (n_frames, 1, 1, 1)) if label == 1 else video_org
         elif self.task == 'blackout':
             label = random.randint(0, self.n_blackout-1)
             chunks = np.array(np.array_split(video_org, self.n_blackout, axis=0), dtype=object)
@@ -834,23 +827,6 @@ class SSV2(Dataset):
             video = np.vstack(chunks).astype(np.float32)
             if video_org.ndim != 4:
                 print("Error at item: ", item)
-        elif self.task == 'freeze':
-            label = random.randint(0, self.n_blackout-1)
-            chunks = np.array(np.array_split(video_org, self.n_blackout, axis=0), dtype=object)
-            frames, _, _, _ = chunks[label].shape
-            frames = 1 if frames == 0 else frames
-            try:
-                chunks[label] = np.tile(np.expand_dims(chunks[label][0], 0), (frames, 1, 1, 1))
-            except:
-                print("Item: ", item)
-                print("Video: ", video_org.shape)
-                print(chunks[0].shape)
-                print(chunks[1].shape)
-                print(chunks[2].shape)
-                print(chunks[3].shape)
-            video = np.vstack(chunks).astype(np.float32)
-            if video.ndim != 4:
-                print("Error at item: ", item)
 
         # Make transformation
         video = torch.from_numpy(video).permute(3, 0, 1, 2)
@@ -860,6 +836,33 @@ class SSV2(Dataset):
         label = torch.tensor(label)
 
         return video, category_idx, label
+
+
+class RandomSampler(Sampler):
+    def __init__(self, data_source, num_samples=None):
+        super().__init__(data_source)
+        self.data_source = data_source
+        self._num_samples = num_samples
+
+        if not isinstance(self.num_samples, int) or self.num_samples <= 0:
+            raise ValueError(
+                "num_samples should be a positive integer "
+                "value, but got num_samples={}".format(self.num_samples)
+            )
+
+    @property
+    def num_samples(self):
+        # dataset size might change at runtime
+        if self._num_samples is None:
+            return len(self.data_source)
+        return self._num_samples
+
+    def __iter__(self):
+        n = len(self.data_source)
+        return iter(torch.randperm(n, dtype=torch.int64)[: self.num_samples].tolist())
+
+    def __len__(self):
+        return self.num_samples
 
 
 __datasets__ = {'kinetics': Kinetics400,

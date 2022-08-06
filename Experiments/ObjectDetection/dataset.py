@@ -46,7 +46,7 @@ class UCF101(Dataset):
             self.videos, self.bbox_label_dict = self.get_bbox_videos_and_labels()
             self.data_dict, _ = self.get_data()
             if self.target == 'all':
-                self.num_classes = 4 * 8
+                self.num_classes = 4 * self.num_frames if self.model != "slowfast" else 4 * self.num_frames // 4
             else:
                 self.num_classes = 4
 
@@ -371,13 +371,13 @@ class UCF101(Dataset):
                 bbox = bboxes.float().flatten()
         else:
             if self.target == 'first':
-                indices = indices[0]
+                indices = 0
                 frame = np.take(video_org, indices, 0)
             elif self.target == 'middle':
-                indices = indices[len(indices) // 2]
+                indices = self.num_frames // 2 if self.model != "slowfast" else self.num_frames // 8
                 frame = np.take(video_org, indices, 0)
             elif self.target == 'last':
-                indices = indices[-1]
+                indices = -1
                 frame = np.take(video_org, indices, 0)
             frame = torch.from_numpy(frame).unsqueeze(0).permute(3, 0, 1, 2)
             frame = self.frame_transform(frame).permute(1, 2, 3, 0)

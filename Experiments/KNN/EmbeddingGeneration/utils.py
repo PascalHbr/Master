@@ -98,8 +98,8 @@ def seed_worker(worker_id):
     random.seed(worker_seed)
 
 
-def save_embedding(model, embedding, video_path):
-    if not os.path.exists(f'../embeddings/{model}/{video_path[0].split("/")[0]}'):
-        os.makedirs(f'../embeddings/{model}/{video_path[0].split("/")[0]}')
-    np.save(f'../embeddings/{model}/{video_path[0]}.npy', embedding[0].detach().cpu().numpy())
+def save_embedding(embedding, video_path, dataset, name):
+    if not os.path.exists(f'../../../../archive/embeddings/{dataset}/{name}/{video_path[0].split("/")[0]}'):
+        os.makedirs(f'../../../../archive/embeddings/{dataset}/{name}/{video_path[0].split("/")[0]}')
+    np.save(f'../../../../archive/embeddings/{dataset}/{name}/{video_path[0]}.npy', embedding[0].detach().cpu().numpy())
 

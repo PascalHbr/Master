@@ -241,7 +241,7 @@ class VIMPAC(nn.Module):
 
 
 class VideoMAE(nn.Module):
-    def __init__(self, num_classes, pretrained=True, freeze=False, keep_head=False, device="cpu", pre_dataset="kinetics"):
+    def __init__(self, num_classes, pretrained=True, freeze=False, keep_head=False, device="cpu", pre_dataset="kinetics_unsupervised"):
         super(VideoMAE, self).__init__()
         self.net = create_model(
             "vit_base_patch16_224",
@@ -259,10 +259,14 @@ class VideoMAE(nn.Module):
 
         # Load pretrained weights
         if pretrained:
-            if pre_dataset == "kinetics":
+            if pre_dataset == "kinetics_unsupervised":
                 load_from_ckpt(self.net, path='../../model_checkpoints/VideoMAE/checkpoint2.pth')
-            else:
+            elif pre_dataset == "kinetics_supervised":
+                load_from_ckpt(self.net, path='../../model_checkpoints/VideoMAE/checkpoint.pth')
+            elif pre_dataset == "ssv2_unsupervised":
                 load_from_ckpt(self.net, path='../../model_checkpoints/VideoMAE/ssv2_pretrained.pth')
+            elif pre_dataset == "ssv2_supervised":
+                load_from_ckpt(self.net, path='../../model_checkpoints/VideoMAE/ssv2_finetuned.pth')
 
         # Freeze baseline
         if freeze:
